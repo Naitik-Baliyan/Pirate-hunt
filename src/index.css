@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sky-blue: #87CEEB;
+  --color-ocean-blue: #0077BE;
+  --color-gold: #FFD700;
+  --color-parchment: #FCF5E5;
+  --color-deep-ocean: #1A365D;
+}
+
+:root {
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #1a1a1a;
+  background-color: #FCF5E5;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@layer utilities {
+  @keyframes gradient-shift {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  @keyframes float-game {
+
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+
+    50% {
+      transform: translateY(-14px) rotate(2deg);
+    }
+  }
+
+  @keyframes breathe {
+
+    0%,
+    100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.02);
+    }
+  }
+
+  @keyframes sparkle-anim {
+
+    0%,
+    100% {
+      opacity: 0.3;
+      transform: scale(0.8);
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+  }
+
+  @keyframes cloud-drift {
+    from {
+      transform: translateX(-100vw);
+    }
+
+    to {
+      transform: translateX(100vw);
+    }
+  }
+}
+
+.bg-nautical-gradient {
+  background: linear-gradient(-45deg, #87CEEB, #2E5D82, #0077BE, #87CEEB);
+  background-size: 400% 400%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+.float-game {
+  animation: float-game 5.5s ease-in-out infinite;
+}
+
+.breathe {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+.sparkle {
+  animation: sparkle-anim 2s ease-in-out infinite;
+}
+
+.cloud {
+  position: absolute;
+  opacity: 0.3;
+  animation: cloud-drift 60s linear infinite;
+}
+
+.parchment-card {
+  background-color: #FCF5E5;
+  border: 1px solid #e2d1b3;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border-radius: 1.5rem;
+  background-image: url('https://www.transparenttextures.com/patterns/fancy-rectangles.png');
+}
+
+.btn-gold {
+  background-color: #FFD700;
+  color: #1e3a8a;
+  font-weight: 900;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  box-shadow: 0 10px 15px -3px rgba(255, 215, 0, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.sparkle-button::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.sparkle-button:active::after {
+  opacity: 1;
+}
+
+.tap-target {
+  min-height: 44px;
+  min-width: 44px;
+}

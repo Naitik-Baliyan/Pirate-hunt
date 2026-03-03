@@ -1,0 +1,79 @@
+﻿
+> pirate-hunt@0.0.0 build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 2160 modules transformed.
+node.exe : [31mΓ£ù[39m Build failed 
+in 1.52s
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecif 
+   ied: ([31mΓ£ù[39m Build failed in  
+   1.52s:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCom 
+   mandError
+ 
+[31merror during build:
+[31msrc/components/Registration.jsx 
+(4:23): "IdentificationCard" is not 
+exported by "node_modules/lucide-react/d
+ist/esm/lucide-react.js", imported by 
+"src/components/Registration.jsx".[31m
+file: [36mC:/Users/ASUS/Desktop/Pirate-
+hunt/src/components/Registration.jsx:4:2
+3[31m
+[33m
+2: import { useNavigate } from 
+'react-router-dom';
+3: import { motion } from 
+'framer-motion';
+4: import { Anchor, User, 
+IdentificationCard, Building } from 
+'lucide-react';
+                          ^
+5: import { saveUser } from 
+'../utils/storage';
+[31m
+    at getRollupError (file:///C:/Users/
+ASUS/Desktop/Pirate-hunt/node_modules/ro
+llup/dist/es/shared/parseAst.js:402:41)
+    at error (file:///C:/Users/ASUS/Desk
+top/Pirate-hunt/node_modules/rollup/dist
+/es/shared/parseAst.js:398:42)
+    at Module.error (file:///C:/Users/AS
+US/Desktop/Pirate-hunt/node_modules/roll
+up/dist/es/shared/node-entry.js:17040:16
+)
+    at Module.traceVariable (file:///C:/
+Users/ASUS/Desktop/Pirate-hunt/node_modu
+les/rollup/dist/es/shared/node-entry.js:
+17452:29)
+    at ModuleScope.findVariable (file://
+/C:/Users/ASUS/Desktop/Pirate-hunt/node_
+modules/rollup/dist/es/shared/node-entry
+.js:15070:39)
+    at ReturnValueScope.findVariable (fi
+le:///C:/Users/ASUS/Desktop/Pirate-hunt/
+node_modules/rollup/dist/es/shared/node-
+entry.js:5673:38)
+    at FunctionBodyScope.findVariable (f
+ile:///C:/Users/ASUS/Desktop/Pirate-hunt
+/node_modules/rollup/dist/es/shared/node
+-entry.js:5673:38)
+    at Identifier.bind (file:///C:/Users
+/ASUS/Desktop/Pirate-hunt/node_modules/r
+ollup/dist/es/shared/node-entry.js:5447:
+40)
+    at CallExpression.bind (file:///C:/U
+sers/ASUS/Desktop/Pirate-hunt/node_modul
+es/rollup/dist/es/shared/node-entry.js:2
+825:28)
+    at CallExpression.bind (file:///C:/U
+sers/ASUS/Desktop/Pirate-hunt/node_modul
+es/rollup/dist/es/shared/node-entry.js:1
+2179:15)[39m
