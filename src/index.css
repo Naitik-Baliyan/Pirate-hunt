@@ -6,6 +6,8 @@
   --color-gold: #FFD700;
   --color-parchment: #FCF5E5;
   --color-deep-ocean: #1A365D;
+  --color-deep-blue: #1E3A8A;
+  --color-nautical-accent: #2E5D82;
 }
 
 :root {
@@ -13,7 +15,7 @@
   line-height: 1.5;
   font-weight: 400;
   color: #1a1a1a;
-  background-color: #FCF5E5;
+  background-color: var(--color-parchment);
 }
 
 body {
@@ -94,7 +96,7 @@ body {
 }
 
 .bg-nautical-gradient {
-  background: linear-gradient(-45deg, #87CEEB, #2E5D82, #0077BE, #87CEEB);
+  background: linear-gradient(-45deg, var(--color-sky-blue), var(--color-nautical-accent), var(--color-ocean-blue), var(--color-sky-blue));
   background-size: 400% 400%;
   animation: gradient-shift 15s ease infinite;
 }
@@ -118,7 +120,7 @@ body {
 }
 
 .parchment-card {
-  background-color: #FCF5E5;
+  background-color: var(--color-parchment);
   border: 1px solid #e2d1b3;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   border-radius: 1.5rem;
@@ -126,8 +128,8 @@ body {
 }
 
 .btn-gold {
-  background-color: #FFD700;
-  color: #1e3a8a;
+  background-color: var(--color-gold);
+  color: var(--color-deep-blue);
   font-weight: 900;
   padding: 0.75rem 1.5rem;
   border-radius: 9999px;
