@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import shipBg from '../assets/ship-bg.png' // I will copy the cinematic ship here
-import captainImg from '../assets/captain.png' // I will copy the captain here
+import captainImg from '../assets/jack_sparrow2.png' // I will copy the captain here
 import mapTexture from '../assets/story-bg.png' // Use the map texture for the banner
 
 export default function BootScreen({ onBootComplete }) {
