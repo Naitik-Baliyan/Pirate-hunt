@@ -16,20 +16,10 @@ export default function BootScreen({ onBootComplete }) {
     <div className="w-full h-screen bg-[#0a1a2e] flex items-center justify-center overflow-hidden relative">
       {/* 1. Cinematic Background with Deep Parallax */}
       <motion.div
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 animate-ocean"
         initial={{ scale: 1.25, opacity: 0, x: -50 }}
-        animate={{
-          scale: 1.1,
-          opacity: 1,
-          rotate: [0, 1.2, -1.2, 0],
-          x: [-20, 20, -20]
-        }}
-        transition={{
-          opacity: { duration: 3 },
-          scale: { duration: 5, ease: "easeOut" },
-          rotate: { duration: 12, repeat: Infinity, ease: "easeInOut" },
-          x: { duration: 20, repeat: Infinity, ease: "easeInOut" }
-        }}
+        animate={{ opacity: 1 }}
+        transition={{ opacity: { duration: 3 } }}
         style={{ willChange: 'transform, opacity' }}
       >
         <img
@@ -55,15 +45,15 @@ export default function BootScreen({ onBootComplete }) {
 
       {/* 2. Pirate Captain with Photorealistic Cinematic Grading */}
       <motion.div
-        className="absolute z-20 w-80 md:w-[550px] pointer-events-none"
-        initial={{ x: -300, y: 300, opacity: 0, rotate: -25, scale: 0.6, filter: 'blur(10px)' }}
+        className="absolute z-20 w-72 md:w-[600px] pointer-events-none -bottom-5 -left-5 md:-bottom-10 md:-left-20"
+        initial={{ x: -400, y: 100, opacity: 0, rotate: -15, scale: 0.8, filter: 'blur(10px)' }}
         animate={{ x: 0, y: 0, opacity: 1, rotate: 0, scale: 1, filter: 'blur(0px)' }}
         transition={{
           delay: 0.8,
-          duration: 2.5,
+          duration: 2.8,
           type: "spring",
-          stiffness: 25,
-          damping: 15
+          stiffness: 20,
+          damping: 12
         }}
         style={{ willChange: 'transform, opacity, filter' }}
       >
@@ -77,7 +67,7 @@ export default function BootScreen({ onBootComplete }) {
           <img
             src={captainImg}
             alt="Captain"
-            className="w-full drop-shadow-[20px_20px_40px_rgba(0,0,0,0.8)] md:drop-shadow-[40px_40px_80px_rgba(0,0,0,0.95)] filter brightness-[1.02] contrast-[1.35] saturate-[0.65] sepia-[0.15]"
+            className="w-full drop-shadow-[20px_20px_40px_rgba(0,0,0,0.8)] md:drop-shadow-[60px_60px_100px_rgba(0,0,0,0.95)] filter brightness-[1.05] contrast-[1.4] saturate-[0.75] sepia-[0.1]"
           />
 
           {/* Subtle Action Rim Highlighting (Procedural) */}
@@ -95,7 +85,7 @@ export default function BootScreen({ onBootComplete }) {
       </motion.div>
 
       {/* 3. Parchment Banner Unfold */}
-      <div className="relative z-30 flex flex-col items-center justify-center mt-32 md:mt-48 w-full px-6">
+      <div className="absolute top-[15%] md:top-[25%] left-0 w-full z-30 flex flex-col items-center px-6 pointer-events-none">
         <motion.div
           className="relative overflow-hidden"
           initial={{ width: 0, opacity: 0 }}
@@ -121,12 +111,12 @@ export default function BootScreen({ onBootComplete }) {
 
             {/* 4. Banner Text */}
             <motion.div
-              className="relative px-8 py-3 md:px-12 md:py-6 text-center"
+              className="relative px-16 py-3 md:px-24 md:py-6 text-center"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 3, duration: 0.8 }}
             >
-              <h1 className="text-xl md:text-3xl font-serif font-black tracking-[0.2em] text-[#2c1810] uppercase drop-shadow-sm">
+              <h1 className="text-xl md:text-3xl font-serif font-black tracking-[0.1em] text-[#2c1810] uppercase drop-shadow-sm">
                 E-Cell MIET <span className="block md:inline mt-1 md:mt-0 md:ml-2 text-sm md:text-xl font-normal opacity-70">Presents</span>
               </h1>
             </motion.div>

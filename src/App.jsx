@@ -18,9 +18,10 @@ export default function App() {
   }
 
   return (
-    <div className="w-full h-screen bg-[#0a101d] overflow-hidden relative filmic-grading">
+    <div className="w-full h-screen bg-[#0a101d] overflow-hidden relative">
       {/* Cinematic Film Effects */}
       <div className="film-grain" />
+      <div className="filmic-grading fixed inset-0 pointer-events-none z-[110]" />
       <div className="atmospheric-dust">
         {/* Reduced dust count for better mobile performance (from 20 to 10) */}
         {[...Array(10)].map((_, i) => (

@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import storyBg from '../assets/story-bg.png'
-import captainImg from '../assets/captain.png'
 
 export default function StoryPage({ onStartHunt }) {
   const storyParagraphs = [
@@ -86,13 +85,13 @@ export default function StoryPage({ onStartHunt }) {
             transition={{ duration: 1, ease: "easeOut" }}
             className="space-y-8"
           >
-            <p className="text-2xl md:text-4xl font-serif leading-relaxed text-[#ffcc33] drop-shadow-[0_4px_8px_rgba(0,0,0,1)] uppercase tracking-wide">
+            <p className="text-2xl md:text-3xl font-serif leading-relaxed text-[#ffcc33] drop-shadow-[0_4px_8px_rgba(0,0,0,1)] uppercase tracking-wide">
               {displayedText}
               {isTyping && (
                 <motion.span
                   animate={{ opacity: [1, 0] }}
                   transition={{ duration: 0.5, repeat: Infinity }}
-                  className="inline-block w-[4px] h-[34px] bg-[#ffcc33] ml-2 align-middle shadow-[0_0_10px_rgba(255,204,51,0.6)]"
+                  className="inline-block w-[2px] h-[28px] md:h-[34px] bg-[#ffcc33] ml-2 align-middle shadow-[0_0_10px_rgba(255,204,51,0.6)]"
                 />
               )}
             </p>
@@ -101,18 +100,18 @@ export default function StoryPage({ onStartHunt }) {
 
         {/* Interaction Hint */}
         <motion.div
-          className="mt-20 flex flex-col items-center justify-center gap-4"
+          className="mt-16 md:mt-24 flex flex-col items-center justify-center gap-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: isTyping ? 0 : 1 }}
           transition={{ duration: 1.5 }}
         >
-          <p className="text-[#ffcc33]/40 font-serif text-sm tracking-[0.4em] uppercase">
+          <p className="text-[#ffcc33]/40 font-serif text-xs md:text-sm tracking-[0.4em] uppercase">
             {currentParaIndex === storyParagraphs.length - 1 ? "Begin the hunt" : "Tap the map to cruise"}
           </p>
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="text-[#ffcc33]/30 text-lg"
+            className="text-[#ffcc33]/30 text-lg md:text-xl"
           >
             ⚓
           </motion.div>
