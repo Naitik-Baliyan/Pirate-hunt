@@ -67,6 +67,8 @@ export default function StoryPage({ onStartHunt }) {
           src={storyBg}
           alt="Voyage Map"
           className="w-full h-full object-cover opacity-70 brightness-90 contrast-110 saturate-[0.8] scale-105"
+          style={{ willChange: 'transform' }}
+          loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-tr from-[#0a1a2e]/80 via-transparent to-[#0a1a2e]/40" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/50" />

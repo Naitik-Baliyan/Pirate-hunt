@@ -30,6 +30,7 @@ export default function BootScreen({ onBootComplete }) {
           rotate: { duration: 12, repeat: Infinity, ease: "easeInOut" },
           x: { duration: 20, repeat: Infinity, ease: "easeInOut" }
         }}
+        style={{ willChange: 'transform, opacity' }}
       >
         <img
           src={shipBg}
@@ -55,7 +56,7 @@ export default function BootScreen({ onBootComplete }) {
       {/* 2. Pirate Captain with Photorealistic Cinematic Grading */}
       <motion.div
         className="absolute z-20 w-80 md:w-[550px] pointer-events-none"
-        initial={{ x: -300, y: 300, opacity: 0, rotate: -25, scale: 0.6, filter: 'blur(15px)' }}
+        initial={{ x: -300, y: 300, opacity: 0, rotate: -25, scale: 0.6, filter: 'blur(10px)' }}
         animate={{ x: 0, y: 0, opacity: 1, rotate: 0, scale: 1, filter: 'blur(0px)' }}
         transition={{
           delay: 0.8,
@@ -64,15 +65,19 @@ export default function BootScreen({ onBootComplete }) {
           stiffness: 25,
           damping: 15
         }}
+        style={{ willChange: 'transform, opacity, filter' }}
       >
         <div className="relative">
           {/* Rim Light / Glow Integration */}
-          <div className="absolute inset-0 bg-white/10 blur-[90px] rounded-full scale-110 -z-10 mix-blend-soft-light" />
+          <div
+            className="absolute inset-0 bg-white/10 blur-[40px] md:blur-[90px] rounded-full scale-110 -z-10 mix-blend-soft-light"
+            style={{ willChange: 'filter' }}
+          />
 
           <img
             src={captainImg}
             alt="Captain"
-            className="w-full drop-shadow-[40px_40px_80px_rgba(0,0,0,0.95)] filter brightness-[1.02] contrast-[1.35] saturate-[0.65] sepia-[0.15]"
+            className="w-full drop-shadow-[20px_20px_40px_rgba(0,0,0,0.8)] md:drop-shadow-[40px_40px_80px_rgba(0,0,0,0.95)] filter brightness-[1.02] contrast-[1.35] saturate-[0.65] sepia-[0.15]"
           />
 
           {/* Subtle Action Rim Highlighting (Procedural) */}
@@ -80,10 +85,11 @@ export default function BootScreen({ onBootComplete }) {
 
           {/* Realistic Splash / Mist Cloud */}
           <motion.div
-            className="absolute bottom-[-15%] left-[-15%] right-[-15%] h-[60%] bg-white/5 blur-[100px] rounded-[50%] -z-10 mix-blend-screen"
+            className="absolute bottom-[-15%] left-[-15%] right-[-15%] h-[60%] bg-white/5 blur-[50px] md:blur-[100px] rounded-[50%] -z-10 mix-blend-screen"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 0.6, scale: 1.1 }}
             transition={{ delay: 1.8, duration: 1.5 }}
+            style={{ willChange: 'transform, opacity, filter' }}
           />
         </div>
       </motion.div>

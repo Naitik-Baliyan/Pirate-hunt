@@ -113,6 +113,8 @@ export default function RegistrationPage() {
           src={mapBg}
           alt="Ancient Map"
           className="w-full h-full object-cover opacity-60 sepia-[0.3] brightness-50 contrast-125 saturate-[0.7] scale-110"
+          style={{ willChange: 'transform' }}
+          loading="lazy"
         />
         {/* Cinematic Overlays: Blending Ocean depth with the map */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a1a2e] via-transparent to-[#0a1a2e]/40" />
@@ -203,9 +205,9 @@ export default function RegistrationPage() {
             )}
 
             {/* Form Card: Parchment Aesthetic */}
-            <div className="relative group overflow-hidden bg-[#fdf5e6]/20 border-2 border-white/20 rounded-3xl p-6 md:p-10 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border-t-white/40 border-l-white/40">
-              {/* Tactical Paper Texture / Grain */}
-              <div className="absolute inset-0 opacity-[0.15] mix-blend-multiply pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
+            <div className="relative group overflow-hidden bg-[#fdf5e6]/20 border-2 border-white/20 rounded-3xl p-6 md:p-10 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border-t-white/40 border-l-white/40" style={{ willChange: 'backdrop-filter, transform' }}>
+              {/* Tactical Paper Texture / Grain - Reduced numOctaves for mobile */}
+              <div className="absolute inset-0 opacity-[0.15] mix-blend-multiply pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
 
               <form onSubmit={handleSubmit} className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Full Name */}

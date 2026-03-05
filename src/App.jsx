@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import BootScreen from './components/BootScreen'
-import StoryPage from './components/StoryPage'
-import RegistrationPage from './components/RegistrationPage'
 import BackgroundMusic from './components/BackgroundMusic'
+
+const StoryPage = lazy(() => import('./components/StoryPage'))
+const RegistrationPage = lazy(() => import('./components/RegistrationPage'))
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('boot') // boot, story, registration
@@ -21,15 +22,16 @@ export default function App() {
       {/* Cinematic Film Effects */}
       <div className="film-grain" />
       <div className="atmospheric-dust">
-        {[...Array(20)].map((_, i) => (
+        {/* Reduced dust count for better mobile performance (from 20 to 10) */}
+        {[...Array(10)].map((_, i) => (
           <div
             key={i}
             className="dust-mote"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-              width: `${Math.random() * 4 + 2}px`,
-              height: `${Math.random() * 4 + 2}px`,
+              width: `${Math.random() * 3 + 1}px`, // Slightly smaller dots
+              height: `${Math.random() * 3 + 1}px`,
               animationDuration: `${Math.random() * 10 + 10}s`,
               animationDelay: `${Math.random() * 10}s`
             }}
@@ -55,29 +57,33 @@ export default function App() {
         )}
 
         {currentPage === 'story' && (
-          <motion.div
-            key="story"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
-            className="w-full"
-          >
-            <StoryPage onStartHunt={handleStartHunt} />
-          </motion.div>
+          <Suspense fallback={<div className="w-full h-screen bg-[#0a101d]" />}>
+            <motion.div
+              key="story"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8 }}
+              className="w-full"
+            >
+              <StoryPage onStartHunt={handleStartHunt} />
+            </motion.div>
+          </Suspense>
         )}
 
         {currentPage === 'registration' && (
-          <motion.div
-            key="registration"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
-            className="w-full"
-          >
-            <RegistrationPage />
-          </motion.div>
+          <Suspense fallback={<div className="w-full h-screen bg-[#0a101d]" />}>
+            <motion.div
+              key="registration"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8 }}
+              className="w-full"
+            >
+              <RegistrationPage />
+            </motion.div>
+          </Suspense>
         )}
       </AnimatePresence>
     </div>
