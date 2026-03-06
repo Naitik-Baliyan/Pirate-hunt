@@ -244,28 +244,28 @@ export default function TasksPage({ onLeaderboard }) {
                 ) : (
                     <motion.div
                         key="quest-list"
-                        className="relative z-10 w-full max-w-4xl"
+                        className="relative z-10 w-full max-w-4xl px-2 sm:px-4"
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                     >
-                        <div className="text-center mb-8">
-                            <h1 className="text-4xl md:text-6xl font-serif text-[rgb(44,24,16)] md:text-pirate-gold drop-shadow-lg md:drop-shadow-[0_4px_10px_rgba(212,175,55,0.4)] tracking-widest uppercase font-black">
+                        <div className="text-center mb-6 md:mb-8">
+                            <h1 className="text-[rgb(44,24,16)] text-3xl sm:text-4xl md:text-6xl md:text-pirate-gold drop-shadow-lg md:drop-shadow-[0_4px_10px_rgba(212,175,55,0.4)] tracking-[0.15em] uppercase font-black leading-tight">
                                 Phase {phase} Quests
                             </h1>
 
                             {/* Letters Progress Bar */}
-                            <div className="flex gap-3 md:gap-5 justify-center mt-8 mb-4">
+                            <div className="flex gap-2 sm:gap-4 md:gap-5 justify-center mt-6 md:mt-8 mb-4">
                                 {targetLetters.map((letter, i) => {
                                     const isRevealed = i < progress
                                     return (
                                         <div
                                             key={i}
-                                            className="w-12 h-16 md:w-16 md:h-20 border-b-4 border-pirate-gold flex items-center justify-center bg-[#0a101d]/40 backdrop-blur-sm rounded-t-lg shadow-inner"
+                                            className="w-10 h-14 sm:w-14 sm:h-18 md:w-16 md:h-20 border-b-4 border-pirate-gold flex items-center justify-center bg-[#0a101d]/40 backdrop-blur-sm rounded-t-lg shadow-inner"
                                         >
                                             {isRevealed ? (
                                                 <motion.span
-                                                    className="text-3xl md:text-4xl font-black text-pirate-gold drop-shadow-[0_0_10px_rgba(212,175,55,0.8)]"
+                                                    className="text-2xl sm:text-3xl md:text-4xl font-black text-pirate-gold drop-shadow-[0_0_10px_rgba(212,175,55,0.8)]"
                                                     initial={{ scale: 0, opacity: 0 }}
                                                     animate={{ scale: 1, opacity: 1 }}
                                                     transition={{ type: "spring" }}
@@ -273,30 +273,30 @@ export default function TasksPage({ onLeaderboard }) {
                                                     {lettersCollected[i]}
                                                 </motion.span>
                                             ) : (
-                                                <span className="text-3xl md:text-4xl font-black text-pirate-gold/30">_</span>
+                                                <span className="text-2xl sm:text-3xl md:text-4xl font-black text-pirate-gold/30">_</span>
                                             )}
                                         </div>
                                     )
                                 })}
                             </div>
-                            <p className="text-[rgb(44,24,16)] font-bold md:font-normal md:text-pirate-gold/70 font-serif mt-2 tracking-widest uppercase text-sm md:text-base">
+                            <p className="text-[rgb(44,24,16)] font-bold md:font-normal md:text-pirate-gold/70 font-serif mt-2 tracking-widest uppercase text-[10px] sm:text-xs md:text-base">
                                 Collect the hidden letters
                             </p>
                         </div>
 
                         {/* Quests Container */}
-                        <div className="space-y-6 md:space-y-8 pb-12">
+                        <div className="space-y-4 md:space-y-8 pb-12">
                             {(!clues || !Array.isArray(clues) || clues.length === 0) ? (
-                                <div className="flex flex-col items-center justify-center p-12 opacity-80 backdrop-blur-md bg-[#0a101d]/40 rounded-3xl border-2 border-dashed border-pirate-gold/30">
+                                <div className="flex flex-col items-center justify-center p-8 md:p-12 opacity-80 backdrop-blur-md bg-[#0a101d]/40 rounded-3xl border-2 border-dashed border-pirate-gold/30">
                                     <motion.div
                                         animate={{ rotate: 360 }}
                                         transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                                        className="text-6xl mb-6 drop-shadow-[0_0_15px_rgba(212,175,55,0.6)]"
+                                        className="text-5xl md:text-6xl mb-4 md:mb-6 drop-shadow-[0_0_15px_rgba(212,175,55,0.6)]"
                                     >
                                         🧭
                                     </motion.div>
-                                    <p className="text-pirate-gold font-serif text-xl md:text-2xl tracking-widest text-center animate-pulse drop-shadow-md">
-                                        Searching the seas for clues...
+                                    <p className="text-pirate-gold font-serif text-lg md:text-2xl tracking-widest text-center animate-pulse drop-shadow-md">
+                                        Searching the seas...
                                     </p>
                                 </div>
                             ) : (
@@ -311,7 +311,7 @@ export default function TasksPage({ onLeaderboard }) {
                                         <motion.div
                                             key={id}
                                             onClick={() => setExpandedQuestId(isExpanded ? null : id)}
-                                            className={`border-2 p-6 md:p-8 rounded-2xl backdrop-blur-md transition-all duration-500 overflow-hidden relative cursor-pointer ${isActive ? 'bg-[#f4e4bc]/90 md:bg-[#f4e4bc]/20 border-pirate-gold/80 shadow-[0_0_30px_rgba(212,175,55,0.2)]' :
+                                            className={`border-2 p-4 sm:p-6 md:p-8 rounded-2xl backdrop-blur-md transition-all duration-500 overflow-hidden relative cursor-pointer ${isActive ? 'bg-[#f4e4bc]/90 md:bg-[#f4e4bc]/20 border-pirate-gold/80 shadow-[0_0_30px_rgba(212,175,55,0.2)]' :
                                                 isCompleted ? 'bg-[#0a101d]/60 border-pirate-gold/30 opacity-70' :
                                                     'bg-[#0a101d]/40 border-[#2c1810]/50 opacity-50 grayscale'
                                                 }`}
@@ -325,16 +325,16 @@ export default function TasksPage({ onLeaderboard }) {
 
                                             <div className="flex flex-col relative z-10">
                                                 <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <h3 className={`font-black font-serif text-xl md:text-2xl tracking-wide ${isActive || isCompleted ? 'text-[#2c1810] md:text-pirate-gold' : 'text-gray-500'}`}>
+                                                    <div className="flex items-center gap-2 md:gap-3">
+                                                        <h3 className={`font-black font-serif text-lg sm:text-xl md:text-2xl tracking-wide ${isActive || isCompleted ? 'text-[#2c1810] md:text-pirate-gold' : 'text-gray-500'}`}>
                                                             QUEST {id}
                                                         </h3>
-                                                        {isCompleted && <span className="text-green-500 text-xl drop-shadow-sm">✔️</span>}
-                                                        {isLocked && <span className="text-gray-500 text-xl">🔒</span>}
+                                                        {isCompleted && <span className="text-green-500 text-lg md:text-xl drop-shadow-sm">✔️</span>}
+                                                        {isLocked && <span className="text-gray-500 text-lg md:text-xl">🔒</span>}
                                                     </div>
                                                     <motion.div
                                                         animate={{ rotate: isExpanded ? 180 : 0 }}
-                                                        className={`text-xl md:text-2xl ${isActive || isCompleted ? 'text-[#2c1810] md:text-pirate-gold' : 'text-gray-500'}`}
+                                                        className={`text-lg md:text-2xl ${isActive || isCompleted ? 'text-[#2c1810] md:text-pirate-gold' : 'text-gray-500'}`}
                                                     >
                                                         ▼
                                                     </motion.div>

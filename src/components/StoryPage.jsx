@@ -100,23 +100,39 @@ export default function StoryPage({ onStartHunt }) {
 
         {/* Interaction Hint */}
         <motion.div
-          className="mt-16 md:mt-24 flex flex-col items-center justify-center gap-4"
+          className="mt-12 md:mt-24 flex flex-col items-center justify-center gap-4 py-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: isTyping ? 0 : 1 }}
           transition={{ duration: 1.5 }}
         >
-          <p className="text-[#ffcc33]/40 font-serif text-xs md:text-sm tracking-[0.4em] uppercase">
-            {currentParaIndex === storyParagraphs.length - 1 ? "Begin the hunt" : "Tap the map to cruise"}
-          </p>
           <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="text-[#ffcc33]/30 text-lg md:text-xl"
+            animate={{
+              y: [0, 10, 0],
+              filter: ["drop-shadow(0 0 2px rgba(255,204,51,0.4))", "drop-shadow(0 0 15px rgba(255,204,51,0.8))", "drop-shadow(0 0 2px rgba(255,204,51,0.4))"]
+            }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="text-[#ffcc33] text-2xl md:text-3xl"
           >
             ⚓
           </motion.div>
+          <p className="text-[#ffcc33] font-serif text-sm md:text-base tracking-[0.3em] uppercase drop-shadow-[0_0_12px_rgba(255,204,51,0.6)] font-bold">
+            {currentParaIndex === storyParagraphs.length - 1 ? "Begin the journey" : "Tap anywhere to continue"}
+          </p>
         </motion.div>
       </div>
+
+      {/* Mobile-Fixed Interaction Prompt (Overlay) */}
+      {!isTyping && (
+        <motion.div
+          className="absolute bottom-10 left-0 w-full flex justify-center z-40 md:hidden pointer-events-none"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <div className="bg-[#ffcc33]/10 backdrop-blur-md px-6 py-2 rounded-full border border-[#ffcc33]/30 animate-pulse">
+            <span className="text-[#ffcc33] text-xs font-serif tracking-widest uppercase font-black">Tap to Continue</span>
+          </div>
+        </motion.div>
+      )}
 
       {/* Cinematic Borders */}
       <div className="absolute top-0 left-0 w-full h-[15vh] bg-gradient-to-b from-black via-black/40 to-transparent pointer-events-none z-30 opacity-90" />

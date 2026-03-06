@@ -159,6 +159,81 @@ body::after {
   text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
 }
 
+/* Global Mobile Stability Fixes */
+:root {
+  --safe-padding: 16px;
+  --touch-target: 44px;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
+  touch-action: manipulation;
+}
+
+/* Typography Fluid Scaling - Refined for 320px-480px width */
+h1 {
+  font-size: clamp(1.75rem, 10vw, 4rem);
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: clamp(1.4rem, 7vw, 2.5rem);
+  line-height: 1.2;
+}
+
+h3 {
+  font-size: clamp(1.2rem, 5vw, 1.8rem);
+}
+
+p {
+  font-size: clamp(0.9rem, 3.5vw, 1.1rem);
+  line-height: 1.6;
+}
+
+/* Safe Container utility */
+.safe-container {
+  width: 100%;
+  max-width: 100%;
+  padding-left: max(var(--safe-padding), env(safe-area-inset-left));
+  padding-right: max(var(--safe-padding), env(safe-area-inset-right));
+}
+
+/* Ensure all interactive elements have safe touch sizes */
+button,
+a,
+input,
+select,
+[role="button"] {
+  min-height: var(--touch-target);
+  min-width: var(--touch-target);
+}
+
+/* Global Utility: Prevent Text Overflow */
+.text-wrap-balance {
+  text-wrap: balance;
+}
+
+.break-word {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+/* Responsive Hide Utilities */
+@media (max-width: 480px) {
+  .hidden-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 481px) {
+  .only-mobile {
+    display: none !important;
+  }
+}
+
 /* Button styling */
 .btn-pirate {
   background: linear-gradient(135deg, #d4af37, #c89a47);
@@ -174,6 +249,9 @@ body::after {
   text-transform: uppercase;
   letter-spacing: 0.2em;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-pirate:hover {

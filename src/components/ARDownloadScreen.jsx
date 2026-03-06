@@ -18,45 +18,45 @@ export default function ARDownloadScreen({ onContinue }) {
             </div>
 
             <motion.div
-                className="max-w-2xl w-full text-center relative z-20 flex flex-col items-center"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                className="w-full max-w-2xl text-center relative z-20 flex flex-col items-center px-4"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.05 }}
                 transition={{ duration: 0.8 }}
             >
                 <motion.div
-                    className="mb-6"
+                    className="mb-4 md:mb-6"
                     animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
                     transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 >
-                    <span className="text-6xl md:text-7xl drop-shadow-[0_0_20px_rgba(212,175,55,0.5)]">🧭</span>
+                    <span className="text-5xl md:text-7xl drop-shadow-[0_0_20px_rgba(212,175,55,0.5)]">🧭</span>
                 </motion.div>
 
-                <h1 className="text-4xl md:text-5xl font-serif text-pirate-gold mb-4 drop-shadow-lg tracking-tight">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-pirate-gold mb-3 md:mb-4 drop-shadow-lg tracking-tight leading-tight">
                     PREPARE FOR THE HUNT
                 </h1>
 
-                <p className="text-xl md:text-2xl text-pirate-gold font-serif mb-6 tracking-[0.1em] uppercase drop-shadow-[0_2px_10px_rgba(212,175,55,0.4)]">
-                    To begin the AR Treasure Hunt, you must install the official scanning application.
+                <p className="text-lg sm:text-xl md:text-2xl text-pirate-gold font-serif mb-6 tracking-[0.1em] uppercase drop-shadow-[0_2px_10px_rgba(212,175,55,0.4)] leading-snug">
+                    To begin the AR Treasure Hunt, install the official scanning application.
                 </p>
 
-                <div className="bg-[#f4e4bc]/10 border-2 border-pirate-gold/30 rounded-3xl p-6 md:p-8 mb-10 w-full backdrop-blur-md shadow-xl border-dashed">
-                    <p className="text-[#fdf5e6]/90 text-lg md:text-xl font-serif leading-relaxed tracking-wide">
-                        This app will allow you to scan the AR markers hidden across the campus and reveal secret codes required to unlock the next clues.
+                <div className="bg-[#f4e4bc]/10 border-2 border-pirate-gold/30 rounded-3xl p-5 sm:p-6 md:p-8 mb-8 md:mb-10 w-full backdrop-blur-md shadow-xl border-dashed">
+                    <p className="text-[#fdf5e6]/90 text-base sm:text-lg md:text-xl font-serif leading-relaxed tracking-wide">
+                        This app will allow you to scan the AR markers across the campus and reveal secret codes to unlock clues.
                     </p>
                 </div>
 
-                <div className="flex flex-col items-center gap-6 w-full">
+                <div className="flex flex-col items-center gap-4 md:gap-6 w-full max-w-md">
                     <motion.a
                         href="#"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-full md:w-auto relative overflow-hidden bg-pirate-gold px-10 py-5 rounded-2xl font-black text-black uppercase tracking-[0.2em] shadow-[0_20px_40px_rgba(212,175,55,0.3)] transition-all flex items-center justify-center gap-3 group"
+                        className="w-full relative overflow-hidden bg-pirate-gold px-6 py-4 rounded-2xl font-black text-black uppercase tracking-[0.15em] shadow-[0_20px_40px_rgba(212,175,55,0.3)] transition-all flex items-center justify-center gap-3 group"
                         whileHover={{ scale: 1.02, backgroundColor: '#ffcc33', boxShadow: '0 25px 50px rgba(212,175,55,0.5)' }}
                         whileTap={{ scale: 0.98 }}
                     >
-                        <span className="text-2xl">📱</span>
-                        <span className="relative z-10 text-lg md:text-xl drop-shadow-sm font-black text-center whitespace-nowrap">
+                        <span className="text-xl">📱</span>
+                        <span className="relative z-10 text-base sm:text-lg md:text-xl drop-shadow-sm font-black text-center">
                             Download AR Scanner
                         </span>
                         <motion.div
@@ -64,13 +64,13 @@ export default function ARDownloadScreen({ onContinue }) {
                         />
                     </motion.a>
 
-                    <p className="text-pirate-gold/70 font-serif text-sm italic tracking-widest uppercase">
-                        Install the app and return here to continue your adventure.
+                    <p className="text-pirate-gold/70 font-serif text-[10px] sm:text-xs italic tracking-[0.2em] uppercase text-center">
+                        Install and return to continue the adventure.
                     </p>
 
                     <motion.button
                         onClick={onContinue}
-                        className="w-full md:w-auto mt-2 px-10 py-4 rounded-xl border-2 border-pirate-gold/50 text-pirate-gold font-bold uppercase tracking-[0.2em] transition-all hover:bg-pirate-gold hover:text-black hover:border-pirate-gold"
+                        className="w-full mt-2 px-6 py-4 rounded-xl border-2 border-pirate-gold/50 text-pirate-gold font-bold uppercase tracking-[0.15em] transition-all hover:bg-pirate-gold hover:text-black hover:border-pirate-gold text-sm sm:text-base"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                     >

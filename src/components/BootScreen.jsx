@@ -8,7 +8,7 @@ export default function BootScreen({ onBootComplete }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       onBootComplete()
-    }, 4500) // 4.5 seconds for the full cinematic intro
+    }, 7000) // Increased to 7 seconds for a more cinematic build-up
     return () => clearTimeout(timer)
   }, [onBootComplete])
 
@@ -84,58 +84,137 @@ export default function BootScreen({ onBootComplete }) {
         </div>
       </motion.div>
 
-      {/* 3. Parchment Banner Unfold */}
-      <div className="absolute top-[15%] md:top-[25%] left-0 w-full z-30 flex flex-col items-center px-6 pointer-events-none">
+      {/* 3. Cinematic Parchment Banner Unfold */}
+      <div className="absolute top-[21%] md:top-[28%] left-0 w-full z-40 flex flex-col items-center px-4 md:px-6 pointer-events-none">
         <motion.div
-          className="relative overflow-hidden"
-          initial={{ width: 0, opacity: 0 }}
-          animate={{ width: "fit-content", opacity: 1 }}
-          transition={{ delay: 2, duration: 1, ease: "easeInOut" }}
+          className="relative w-full flex justify-center"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 2.8, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
         >
-          <div className="relative p-1">
-            {/* Banner Background with Map Texture */}
+          {/* Glowing Aura behind the banner with flicker */}
+          <motion.div
+            className="absolute inset-x-0 h-full bg-pirate-gold/25 blur-[40px] md:blur-[60px] rounded-full -z-10"
+            animate={{ opacity: [0.4, 0.7, 0.4], scale: [1, 1.1, 1] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          />
+
+          <div className="relative w-max max-w-full">
+            {/* Banner Background with Map Texture and Burned Edges Effect */}
             <motion.div
-              className="absolute inset-0 bg-[#f4e4bc] border-y-4 border-[#8b6a1f] shadow-2xl"
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ delay: 2, duration: 1, ease: "easeInOut" }}
-              style={{ originX: 0.5 }}
+              className="relative overflow-visible bg-[#f4e4bc] border-y-[4px] md:border-y-[6px] border-[#8b6a1f] shadow-[0_30px_60px_rgba(0,0,0,0.8)]"
+              initial={{ width: 0 }}
+              animate={{ width: "fit-content" }}
+              transition={{ delay: 3, duration: 1.5, ease: "circOut" }}
             >
+              {/* Map Texture Overlay */}
               <img
                 src={mapTexture}
                 alt="texture"
-                className="absolute inset-0 w-full h-full object-cover opacity-20 sepia contrast-150"
+                className="absolute inset-0 w-full h-full object-cover opacity-40 sepia contrast-125"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#8b6a1f]/10 via-transparent to-[#8b6a1f]/10" />
+
+              {/* Parchment Creases / Folds */}
+              <div className="absolute inset-y-0 left-1/4 w-[1px] bg-black/10 shadow-[0_0_15px_rgba(0,0,0,0.2)]" />
+              <div className="absolute inset-y-0 right-1/4 w-[1px] bg-black/10 shadow-[0_0_15px_rgba(0,0,0,0.2)]" />
+
+              {/* Gold Leaf Accents / Grain */}
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/gold-dust.png')] opacity-20 mix-blend-overlay" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#8b6a1f]/40 via-transparent to-[#8b6a1f]/40" />
+
+              {/* 4. Banner Text with Premium Cinematic Styling */}
+              <motion.div
+                className="relative px-6 py-6 sm:px-16 md:px-48 lg:px-64 md:py-10 text-center min-w-[260px] sm:min-w-[500px] lg:min-w-[800px]"
+                initial={{ opacity: 0, filter: "blur(10px)" }}
+                animate={{ opacity: 1, filter: "blur(0px)" }}
+                transition={{ delay: 4, duration: 2 }}
+              >
+                <div className="flex flex-col items-center justify-center gap-1 md:gap-2 w-full">
+                  <motion.div
+                    className="flex items-center gap-2 md:gap-3 mb-1"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 3.2, duration: 0.8 }}
+                  >
+                    <div className="h-[1.5px] w-6 sm:w-12 bg-gradient-to-r from-transparent to-[#8b6a1f]" />
+                    <span className="text-[10px] sm:text-xs md:text-sm font-serif tracking-[0.3em] sm:tracking-[0.6em] text-[#8b6a1f] uppercase font-black whitespace-nowrap">ENTERING THE VAULT</span>
+                    <div className="h-[1.5px] w-6 sm:w-12 bg-gradient-to-l from-transparent to-[#8b6a1f]" />
+                  </motion.div>
+
+                  <h1 className="text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-black tracking-tighter text-[#2c1810] uppercase drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)] leading-none w-full">
+                    <span className="relative inline-block">
+                      E-Cell MIET
+                      {/* Subtle gold shine sweep */}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -skew-x-12 pointer-events-none"
+                        animate={{ x: ['-200%', '200%'] }}
+                        transition={{ delay: 4, duration: 3, repeat: Infinity, repeatDelay: 4 }}
+                      />
+                    </span>
+                  </h1>
+
+                  <div className="flex items-center gap-3 md:gap-5 w-full mt-2 md:mt-3 max-w-sm md:max-w-lg mx-auto">
+                    <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-[#8b6a1f]/60 to-[#8b6a1f]" />
+                    <span className="text-sm sm:text-base md:text-3xl font-serif text-[#2c1810] italic lowercase opacity-80 font-bold tracking-widest whitespace-nowrap">presents</span>
+                    <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent via-[#8b6a1f]/60 to-[#8b6a1f]" />
+                  </div>
+                </div>
+              </motion.div>
             </motion.div>
 
-            {/* 4. Banner Text */}
+            {/* Banner Decorative Scrolls (Ends) - Heavy Wood Cylinders */}
             <motion.div
-              className="relative px-6 py-4 sm:px-12 md:px-24 md:py-6 text-center"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 3, duration: 0.8 }}
+              className="absolute -left-4 top-[-15%] bottom-[-15%] w-8 bg-gradient-to-r from-[#2c1810] via-[#5d4037] to-[#2c1810] border-[3px] border-[#8b6a1f] rounded-full shadow-2xl z-50 overflow-hidden"
+              initial={{ scaleY: 0, rotate: -20 }}
+              animate={{ scaleY: 1, rotate: 0 }}
+              transition={{ delay: 2, duration: 1.5 }}
             >
-              <h1 className="text-lg leading-tight sm:text-xl md:text-3xl font-serif font-black tracking-[0.1em] text-[#2c1810] uppercase drop-shadow-sm flex flex-col md:flex-row items-center justify-center">
-                <span>E-Cell MIET</span>
-                <span className="md:ml-3 mt-1 md:mt-0 text-sm md:text-xl font-normal opacity-80">Presents</span>
-              </h1>
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-30" />
+              <div className="h-full w-full bg-gradient-to-b from-black/40 via-transparent to-black/40" />
+            </motion.div>
+
+            <motion.div
+              className="absolute -right-4 top-[-15%] bottom-[-15%] w-8 bg-gradient-to-r from-[#2c1810] via-[#5d4037] to-[#2c1810] border-[3px] border-[#8b6a1f] rounded-full shadow-2xl z-50 overflow-hidden"
+              initial={{ scaleY: 0, rotate: 20 }}
+              animate={{ scaleY: 1, rotate: 0 }}
+              transition={{ delay: 2, duration: 1.5 }}
+            >
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] opacity-30" />
+              <div className="h-full w-full bg-gradient-to-b from-black/40 via-transparent to-black/40" />
             </motion.div>
           </div>
 
-          {/* Banner Decorative Scrolls (Ends) */}
+          {/* Golden Embers around the banner */}
           <motion.div
-            className="absolute left-0 top-0 bottom-0 w-2 bg-[#5d4037] border-l-2 border-[#3d2b22]"
-            initial={{ scaleY: 0 }}
-            animate={{ scaleY: 1 }}
-            transition={{ delay: 2, duration: 0.5 }}
-          />
-          <motion.div
-            className="absolute right-0 top-0 bottom-0 w-2 bg-[#5d4037] border-r-2 border-[#3d2b22]"
-            initial={{ scaleY: 0 }}
-            animate={{ scaleY: 1 }}
-            transition={{ delay: 2, duration: 0.5 }}
-          />
+            className="absolute -inset-20 pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 2.5 }}
+          >
+            {[...Array(10)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1.5 h-1.5 bg-pirate-gold rounded-full shadow-[0_0_8px_rgba(212,175,55,0.8)]"
+                animate={{
+                  y: [0, -60, -120],
+                  x: [0, Math.random() * 80 - 40, Math.random() * 120 - 60],
+                  opacity: [0, 0.8, 0],
+                  scale: [0, 1.2, 0],
+                  rotate: [0, 180, 360]
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  delay: 4 + (i * 0.3),
+                  ease: "easeInOut"
+                }}
+                style={{
+                  left: `${10 + Math.random() * 80}%`,
+                  bottom: '20%'
+                }}
+              />
+            ))}
+          </motion.div>
         </motion.div>
       </div>
 

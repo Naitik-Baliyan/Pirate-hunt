@@ -117,14 +117,15 @@ export default function Leaderboard({ phase }) {
                 </div>
 
                 <div className="bg-[#fdf5e6]/10 border-2 border-pirate-gold/30 rounded-3xl backdrop-blur-md shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden">
-                    <div className="overflow-x-auto no-scrollbar">
-                        <table className="w-full text-left font-serif min-w-[600px]">
+                    {/* Desktop View Table: Shown on larger screens */}
+                    <div className="hidden md:block overflow-x-auto no-scrollbar">
+                        <table className="w-full text-left font-serif">
                             <thead className="bg-[#2c1810]/80 text-pirate-gold border-b-2 border-pirate-gold/40">
                                 <tr>
                                     <th className="p-4 md:p-6 text-xl tracking-widest text-center w-24">Rank</th>
                                     <th className="p-4 md:p-6 text-xl tracking-widest">Captain</th>
                                     <th className="p-4 md:p-6 text-xl tracking-widest">Roll No</th>
-                                    <th className="p-4 md:p-6 text-xl tracking-widest hidden md:table-cell">Branch</th>
+                                    <th className="p-4 md:p-6 text-xl tracking-widest hidden lg:table-cell">Branch</th>
                                     <th className="p-4 md:p-6 text-xl tracking-widest text-right">Time</th>
                                 </tr>
                             </thead>
@@ -159,7 +160,7 @@ export default function Leaderboard({ phase }) {
                                             <td className="p-4 md:p-6 text-pirate-gold/80 font-bold font-mono text-lg">
                                                 {leader.rollNumber}
                                             </td>
-                                            <td className="p-4 md:p-6 text-white/80 hidden md:table-cell uppercase tracking-wider">
+                                            <td className="p-4 md:p-6 text-white/80 hidden lg:table-cell uppercase tracking-wider">
                                                 {leader.branch}
                                             </td>
                                             <td className="p-4 md:p-6 text-[#fdf5e6] text-right font-mono text-lg font-bold">
@@ -170,6 +171,56 @@ export default function Leaderboard({ phase }) {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Mobile View: Card-based layout for 320px-480px */}
+                    <div className="md:hidden flex flex-col divide-y divide-pirate-gold/10">
+                        {loading ? (
+                            <div className="p-12 text-center text-pirate-gold animate-pulse text-lg tracking-widest">
+                                Unrolling the records...
+                            </div>
+                        ) : leaders.length === 0 ? (
+                            <div className="p-12 text-center text-white/50 text-lg tracking-widest italic">
+                                No sailors found.
+                            </div>
+                        ) : (
+                            leaders.map((leader, index) => (
+                                <motion.div
+                                    key={leader.id}
+                                    className="p-4 flex flex-col gap-3 relative overflow-hidden"
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: index * 0.1 }}
+                                >
+                                    {/* Rank Badge */}
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-3xl filter drop-shadow-md">
+                                                {getRankMedal(index)}
+                                            </span>
+                                            <div className="flex flex-col">
+                                                <span className="text-[#fdf5e6] font-serif font-black text-lg uppercase tracking-tight leading-tight">
+                                                    {leader.name}
+                                                </span>
+                                                <span className="text-pirate-gold/70 font-mono text-xs tracking-widest uppercase">
+                                                    {leader.rollNumber}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="text-right flex flex-col items-end">
+                                            <span className="text-white font-mono text-sm font-bold bg-[#2c1810]/60 px-2 py-1 rounded-md border border-pirate-gold/20">
+                                                {formatTime(phase === 1 ? leader.phase1Time : leader.phase2Time)}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Subtle highlight for top 3 */}
+                                    {index < 3 && (
+                                        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-pirate-gold/10 via-transparent to-transparent pointer-events-none" />
+                                    )}
+                                </motion.div>
+                            ))
+                        )}
                     </div>
                 </div>
 

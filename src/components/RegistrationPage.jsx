@@ -97,7 +97,7 @@ export default function RegistrationPage({ onComplete }) {
   }
 
   return (
-    <div className="w-full min-h-screen relative flex items-center justify-center px-6 py-12 bg-[#0a1a2e] overflow-hidden">
+    <div className="w-full min-h-screen relative flex items-center justify-center px-4 py-12 bg-[#0a1a2e] overflow-hidden">
       {/* Shared Background Layer: Map Blend */}
       <div className="absolute inset-0 z-0 select-none pointer-events-none">
         <img
@@ -133,7 +133,7 @@ export default function RegistrationPage({ onComplete }) {
         {success ? (
           <motion.div
             key="success-screen"
-            className="max-w-2xl w-full text-center relative z-20"
+            className="max-w-4xl w-full text-center relative z-20"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.1 }}
@@ -147,47 +147,47 @@ export default function RegistrationPage({ onComplete }) {
               <span className="text-7xl drop-shadow-[0_0_20px_rgba(212,175,55,0.5)]">🏴‍☠️</span>
             </motion.div>
 
-            <h1 className="text-4xl md:text-6xl font-serif text-pirate-gold mb-6 drop-shadow-lg tracking-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-serif text-pirate-gold mb-4 md:mb-6 drop-shadow-lg tracking-tight leading-tight">
               WELCOME EXPLORER!
             </h1>
 
-            <p className="text-xl md:text-2xl text-pirate-gold font-serif mb-10 tracking-[0.2em] uppercase drop-shadow-[0_2px_10px_rgba(212,175,55,0.4)]">
+            <p className="text-lg sm:text-xl md:text-2xl text-pirate-gold font-serif mb-8 md:mb-10 tracking-[0.1em] uppercase drop-shadow-[0_2px_10px_rgba(212,175,55,0.4)] leading-tight">
               Your legend begins today.
             </p>
 
-            <div className="bg-[#f4e4bc]/30 border-2 border-pirate-gold/40 rounded-3xl p-8 mb-10 backdrop-blur-2xl shadow-2xl border-dashed">
-              <p className="text-[#2c1810]/60 font-serif text-sm mb-4 uppercase tracking-[0.3em] font-bold">Credentials Secured</p>
-              <p className="terminal-text text-[#2c1810] text-3xl md:text-4xl break-all tracking-widest font-black drop-shadow-sm">
+            <div className="bg-[#f4e4bc]/30 border-2 border-pirate-gold/40 rounded-3xl p-6 sm:p-8 mb-8 md:mb-10 backdrop-blur-2xl shadow-2xl border-dashed">
+              <p className="text-[#2c1810]/60 font-serif text-[10px] sm:text-xs mb-3 uppercase tracking-[0.3em] font-bold">Credentials Secured</p>
+              <p className="terminal-text text-[#2c1810] text-2xl sm:text-3xl md:text-4xl break-all tracking-widest font-black drop-shadow-sm">
                 {participantID}
               </p>
             </div>
 
-            <p className="text-pirate-gold/50 font-serif text-sm italic tracking-widest">
+            <p className="text-pirate-gold/50 font-serif text-[10px] sm:text-xs italic tracking-widest uppercase">
               Keep this ID safe. The vault hunt awaits.
             </p>
           </motion.div>
         ) : (
           <motion.div
             key="registration-form"
-            className="max-w-2xl w-full relative z-20"
+            className="w-full max-w-4xl relative z-20 flex flex-col items-center"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.8 }}
           >
             {/* Title */}
-            <h1 className="text-4xl md:text-6xl font-serif text-pirate-gold text-center mb-2 drop-shadow-[0_4px_10px_rgba(212,175,55,0.4)] tracking-wider">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-serif text-pirate-gold text-center mb-2 drop-shadow-[0_4px_10px_rgba(212,175,55,0.4)] tracking-[0.15em] uppercase leading-tight">
               TREASURE VAULT
             </h1>
 
-            <p className="text-center text-pirate-gold/60 font-serif text-lg mb-10 tracking-[0.2em] uppercase">
+            <p className="text-center text-pirate-gold/60 font-serif text-sm sm:text-base md:text-lg mb-8 md:mb-10 tracking-[0.2em] uppercase">
               Enlist your crew to begin
             </p>
 
             {/* Error message */}
             {error && (
               <motion.div
-                className="mb-8 p-4 bg-red-600/20 border-2 border-red-500/50 rounded-lg text-white text-center backdrop-blur-md"
+                className="w-full mb-6 p-4 bg-red-600/20 border-2 border-red-500/50 rounded-lg text-white text-center backdrop-blur-md text-sm"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
               >
@@ -196,14 +196,14 @@ export default function RegistrationPage({ onComplete }) {
             )}
 
             {/* Form Card: Parchment Aesthetic */}
-            <div className="relative group overflow-hidden bg-[#fdf5e6]/20 border-2 border-white/20 rounded-3xl p-6 md:p-10 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border-t-white/40 border-l-white/40" style={{ willChange: 'backdrop-filter, transform' }}>
-              {/* Tactical Paper Texture / Grain - Reduced numOctaves for mobile */}
+            <div className="w-full relative group overflow-hidden bg-[#fdf5e6]/20 border-2 border-white/30 rounded-3xl px-10 py-10 sm:px-12 sm:py-12 md:p-16 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border-t-white/40 border-l-white/40" style={{ willChange: 'backdrop-filter, transform' }}>
+              {/* Tactical Paper Texture / Grain */}
               <div className="absolute inset-0 opacity-[0.15] mix-blend-multiply pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
 
-              <form onSubmit={handleSubmit} className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <form onSubmit={handleSubmit} className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
                 {/* Full Name */}
-                <div className="md:col-span-2">
-                  <label className="block text-white text-sm font-serif mb-2 uppercase tracking-[0.2em] font-bold drop-shadow-md">
+                <div className="md:col-span-2 px-4">
+                  <label className="block text-white text-[10px] sm:text-xs md:text-sm font-serif mb-2 uppercase tracking-[0.2em] font-bold drop-shadow-md opacity-100 pl-6">
                     Captain's Name
                   </label>
                   <input
@@ -211,15 +211,15 @@ export default function RegistrationPage({ onComplete }) {
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
-                    className="w-full px-5 py-4 bg-[#fdf5e6]/10 border-2 border-white/10 rounded-2xl text-white font-serif focus:outline-none focus:border-pirate-gold focus:ring-4 focus:ring-pirate-gold/20 transition-all placeholder:text-white/20 backdrop-blur-sm"
-                    placeholder="Full Name"
+                    className="w-full px-5 py-4 bg-white/10 border-2 border-white/20 rounded-2xl text-white font-serif focus:outline-none focus:border-pirate-gold focus:ring-4 focus:ring-pirate-gold/20 transition-all placeholder:text-white/40 backdrop-blur-sm min-h-[48px]"
+                    placeholder="Enter Full Name"
                     required
                   />
                 </div>
 
                 {/* Roll Number */}
-                <div>
-                  <label className="block text-white text-sm font-serif mb-2 uppercase tracking-[0.2em] font-bold drop-shadow-md">
+                <div className="w-full px-4">
+                  <label className="block text-white text-[10px] sm:text-xs md:text-sm font-serif mb-2 uppercase tracking-[0.2em] font-bold drop-shadow-md opacity-100 pl-6">
                     Roll Number
                   </label>
                   <input
@@ -227,15 +227,15 @@ export default function RegistrationPage({ onComplete }) {
                     name="rollNumber"
                     value={formData.rollNumber}
                     onChange={handleChange}
-                    className="w-full px-5 py-4 bg-[#fdf5e6]/10 border-2 border-white/10 rounded-2xl text-white font-serif focus:outline-none focus:border-pirate-gold focus:ring-4 focus:ring-pirate-gold/20 transition-all placeholder:text-white/20 backdrop-blur-sm"
+                    className="w-full px-5 py-4 bg-white/10 border-2 border-white/20 rounded-2xl text-white font-serif focus:outline-none focus:border-pirate-gold focus:ring-4 focus:ring-pirate-gold/20 transition-all placeholder:text-white/40 backdrop-blur-sm min-h-[48px]"
                     placeholder="E.g. 23Bxxx"
                     required
                   />
                 </div>
 
                 {/* Branch */}
-                <div>
-                  <label className="block text-white text-sm font-serif mb-2 uppercase tracking-[0.2em] font-bold drop-shadow-md">
+                <div className="w-full px-4">
+                  <label className="block text-white text-[10px] sm:text-xs md:text-sm font-serif mb-2 uppercase tracking-[0.2em] font-bold drop-shadow-md opacity-100 pl-6">
                     Branch / Department
                   </label>
                   <input
@@ -243,7 +243,7 @@ export default function RegistrationPage({ onComplete }) {
                     name="branch"
                     value={formData.branch}
                     onChange={handleChange}
-                    className="w-full px-5 py-4 bg-[#fdf5e6]/10 border-2 border-white/10 rounded-2xl text-white font-serif focus:outline-none focus:border-pirate-gold focus:ring-4 focus:ring-pirate-gold/20 transition-all placeholder:text-white/20 backdrop-blur-sm"
+                    className="w-full px-5 py-4 bg-white/10 border-2 border-white/20 rounded-2xl text-white font-serif focus:outline-none focus:border-pirate-gold focus:ring-4 focus:ring-pirate-gold/20 transition-all placeholder:text-white/40 backdrop-blur-sm min-h-[48px]"
                     placeholder="E.g. CSE"
                     required
                   />
@@ -254,11 +254,11 @@ export default function RegistrationPage({ onComplete }) {
                   <motion.button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full group relative overflow-hidden bg-pirate-gold px-8 py-5 rounded-2xl font-black text-black uppercase tracking-[0.4em] shadow-[0_20px_40px_rgba(212,175,55,0.3)] transition-all"
+                    className="w-full group relative overflow-hidden bg-pirate-gold px-8 py-4 md:py-5 rounded-2xl font-black text-black uppercase tracking-[0.4em] shadow-[0_20px_40px_rgba(212,175,55,0.3)] transition-all min-h-[54px]"
                     whileHover={!isLoading ? { scale: 1.01, backgroundColor: '#ffcc33', boxShadow: '0 25px 50px rgba(212,175,55,0.5)' } : {}}
                     whileTap={!isLoading ? { scale: 0.98 } : {}}
                   >
-                    <span className="relative z-10 text-xl drop-shadow-sm font-black">
+                    <span className="relative z-10 text-lg md:text-xl drop-shadow-sm font-black">
                       {isLoading ? 'ENLISTING...' : 'ENLIST NOW'}
                     </span>
                     <motion.div
