@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { db } from '../firebase/firebaseConfig'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { supabase } from '../supabaseClient'
 import mapBg from '../assets/registration-map.jpg'
 
 export default function RegistrationPage({ onComplete }) {
@@ -48,27 +47,30 @@ export default function RegistrationPage({ onComplete }) {
       const newParticipantID = generateParticipantID()
       setParticipantID(newParticipantID)
 
-      // Save to Firestore
-      const treasureHuntRef = collection(db, 'treasure_hunt_participants')
-      const docData = {
-        name: formData.fullName,
-        rollNumber: formData.rollNumber,
-        branch: formData.branch,
-        startTime: serverTimestamp(),
-        currentPhase: 1,
-        currentQuest: 0,
-        lettersCollected: [],
-        phase1Completed: false,
-        phase1Time: null,
-        phase2Completed: false,
-        phase2Time: null,
-        participantID: newParticipantID // Store the generated ID just in case
-      }
+      // Save to Supabase
+      const { data, error: supabaseError } = await supabase
+        .from('participants')
+        .insert([
+          {
+            name: formData.fullName,
+            roll_number: formData.rollNumber,
+            branch: formData.branch,
+            participant_id: newParticipantID,
+            current_phase: 1,
+            current_quest: 0,
+            letters_collected: [],
+            phase1_completed: false,
+            phase2_completed: false
+          }
+        ])
+        .select()
 
-      const docRef = await addDoc(treasureHuntRef, docData)
+      if (supabaseError) throw supabaseError
 
       // Save doc.id to localStorage so TasksPage can act over it
-      localStorage.setItem('pirateHuntDocId', docRef.id)
+      // Supabase returns an array for insert.select()
+      const participant = data[0]
+      localStorage.setItem('pirateHuntDocId', participant.id)
 
       // Show success
       setSuccess(true)

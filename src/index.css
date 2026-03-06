@@ -1,5 +1,15 @@
 @import "tailwindcss";
-@config "../tailwind.config.js";
+
+@theme {
+  --color-pirate-dark: #2c1810;
+  --color-pirate-navy: #4a3427;
+  --color-pirate-gold: #d4af37;
+  --color-pirate-parchment: #f4e4bc;
+  --color-pirate-accent: #8b0000;
+
+  --font-serif: "Georgia", serif;
+  --font-mono: "Courier New", monospace;
+}
 
 * {
 

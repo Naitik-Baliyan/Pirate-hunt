@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { db } from '../firebase/firebaseConfig'
-import { collection, query, where, orderBy, limit, getDocs, doc, onSnapshot } from 'firebase/firestore'
+import { motion, AnimatePresence } from 'framer-motion'
+import { supabase } from '../supabaseClient'
 import mapBg from '../assets/registration-map.jpg' // Using map background for consistency
 
 export default function Leaderboard({ phase }) {
@@ -13,23 +12,19 @@ export default function Leaderboard({ phase }) {
         const fetchLeaderboard = async () => {
             setLoading(true)
             try {
-                const completedField = phase === 1 ? 'phase1Completed' : 'phase2Completed'
-                const timeField = phase === 1 ? 'phase1Time' : 'phase2Time'
+                const completedField = phase === 1 ? 'phase1_completed' : 'phase2_completed'
+                const timeField = phase === 1 ? 'phase1_time' : 'phase2_time'
 
-                const q = query(
-                    collection(db, 'treasure_hunt_participants'),
-                    where(completedField, '==', true),
-                    orderBy(timeField, 'asc'),
-                    limit(20)
-                )
+                const { data, error } = await supabase
+                    .from('participants')
+                    .select('*')
+                    .eq(completedField, true)
+                    .order(timeField, { ascending: true })
+                    .limit(20)
 
-                const querySnapshot = await getDocs(q)
-                const participants = []
-                querySnapshot.forEach((doc) => {
-                    participants.push({ id: doc.id, ...doc.data() })
-                })
-
-                setLeaders(participants)
+                if (data && !error) {
+                    setLeaders(data)
+                }
             } catch (error) {
                 console.error("Error fetching leaderboard:", error)
             } finally {
@@ -40,17 +35,17 @@ export default function Leaderboard({ phase }) {
         fetchLeaderboard()
 
         // Listener for Game Control (to check if hunt is concluded)
-        const unsubControl = onSnapshot(doc(db, 'gameControl', 'currentPhase'), (docSnap) => {
-            if (docSnap.exists()) {
-                setWinnerDeclared(docSnap.data().winnerDeclared || false)
-            }
-        }, (err) => console.error(err))
+        const unsubControl = supabase.channel('game_state_leaderboard')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_state' }, payload => {
+                setWinnerDeclared(payload.new.winner_declared || false)
+            })
+            .subscribe()
 
         // Auto-refresh every 30 seconds
         const interval = setInterval(fetchLeaderboard, 30000)
         return () => {
             clearInterval(interval)
-            unsubControl()
+            supabase.removeChannel(unsubControl)
         }
     }, [phase])
 
@@ -61,9 +56,9 @@ export default function Leaderboard({ phase }) {
         return `${index + 1}`
     }
 
-    const formatTime = (timestamp) => {
-        if (!timestamp) return '--:--'
-        const date = timestamp.toDate()
+    const formatTime = (timeString) => {
+        if (!timeString) return '--:--'
+        const date = new Date(timeString)
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
 

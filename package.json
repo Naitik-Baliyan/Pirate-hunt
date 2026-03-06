@@ -9,9 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.98.0",
     "@tailwindcss/postcss": "^4.2.1",
     "@tailwindcss/vite": "^4.2.1",
-    "firebase": "^12.10.0",
     "framer-motion": "^12.35.0",
     "jimp": "^0.16.1",
     "localforage": "^1.10.0",

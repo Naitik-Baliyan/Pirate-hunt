@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { db } from '../firebase/firebaseConfig'
-import { doc, getDoc, updateDoc, onSnapshot, serverTimestamp } from 'firebase/firestore'
+import { supabase } from '../supabaseClient'
 import tasksBg from '../assets/registration-map.jpg'
 
 export default function TasksPage({ onLeaderboard }) {
@@ -23,46 +22,77 @@ export default function TasksPage({ onLeaderboard }) {
     useEffect(() => {
         if (!participantId) {
             console.error("No participant ID found. Redirecting might be needed.")
-            // For now, let it load empty or handle error
             setIsLoaded(true)
             return
         }
 
-        // Listener for Game Control
-        const unsubControl = onSnapshot(doc(db, 'gameControl', 'currentPhase'), (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data()
-                setPhase(data.phase || 1)
-                setTargetWord(data.currentWord || 'IDEAS')
-                setWinnerDeclared(data.winnerDeclared || false)
+        // 1. Initial Fetch for Game Control
+        const fetchGameControl = async () => {
+            const { data, error } = await supabase
+                .from('game_state')
+                .select('*')
+                .single()
+
+            if (data && !error) {
+                setPhase(data.current_phase || 1)
+                setTargetWord(data.current_word || 'IDEAS')
+                setWinnerDeclared(data.winner_declared || false)
             }
-        }, (err) => console.error(err))
+        }
+        fetchGameControl()
 
-        // Listener for Participant
-        const unsubParticipant = onSnapshot(doc(db, 'treasure_hunt_participants', participantId), (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data()
-                setLettersCollected(data.lettersCollected || [])
+        // 2. Initial Fetch for Participant
+        const fetchParticipant = async () => {
+            const { data, error } = await supabase
+                .from('participants')
+                .select('*')
+                .eq('id', participantId)
+                .single()
 
-                // Set expand to next quest automatically
-                const nextQuest = (data.lettersCollected?.length || 0) + 1
+            if (data && !error) {
+                setLettersCollected(data.letters_collected || [])
+                const nextQuest = (data.letters_collected?.length || 0) + 1
                 setExpandedQuestId(nextQuest)
 
-                if (data.currentPhase === 1 && data.phase1Completed) {
+                if (data.current_phase === 1 && data.phase1_completed) {
                     setShowCompletion(true)
-                } else if (data.currentPhase === 2 && data.phase2Completed) {
+                } else if (data.current_phase === 2 && data.phase2_completed) {
                     setShowCompletion(true)
                 }
-
-                if (!isLoaded) setIsLoaded(true)
-            } else {
-                if (!isLoaded) setIsLoaded(true)
             }
-        }, (err) => console.error(err))
+            if (!isLoaded) setIsLoaded(true)
+        }
+        fetchParticipant()
+
+        // 3. Real-time Subscription for Game State
+        const gameStateChannel = supabase.channel('game_state_changes')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_state' }, payload => {
+                const data = payload.new
+                setPhase(data.current_phase || 1)
+                setTargetWord(data.current_word || 'IDEAS')
+                setWinnerDeclared(data.winner_declared || false)
+            })
+            .subscribe()
+
+        // 4. Real-time Subscription for Participant
+        const participantChannel = supabase.channel(`participant_${participantId}`)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'participants', filter: `id=eq.${participantId}` }, payload => {
+                const data = payload.new
+                setLettersCollected(data.letters_collected || [])
+                const nextQuest = (data.letters_collected?.length || 0) + 1
+                setExpandedQuestId(nextQuest)
+
+                if (data.current_phase === 1 && data.phase1_completed) {
+                    setShowCompletion(true)
+                } else if (data.current_phase === 2 && data.phase2_completed) {
+                    setShowCompletion(true)
+                }
+            })
+            .subscribe()
 
         return () => {
-            unsubControl()
-            unsubParticipant()
+            supabase.removeChannel(gameStateChannel)
+            supabase.removeChannel(participantChannel)
         }
     }, [participantId])
 
@@ -70,16 +100,21 @@ export default function TasksPage({ onLeaderboard }) {
     useEffect(() => {
         const fetchClues = async () => {
             try {
-                const phaseDocTitle = `phase${phase}`
-                const clueDocRef = doc(db, 'clues', phaseDocTitle)
-                const clueDoc = await getDoc(clueDocRef)
+                const { data, error } = await supabase
+                    .from('clues')
+                    .select('*')
+                    .eq('phase', phase)
+                    .order('quest_number', { ascending: true })
 
-                if (clueDoc.exists() && Array.isArray(clueDoc.data().quests)) {
-                    const fetchedQuests = clueDoc.data().quests
-                    console.log("Fetched Clues (Quests Array):", fetchedQuests)
-                    setClues(fetchedQuests)
+                if (data && !error) {
+                    // Map clues to the expected quest structure
+                    const formattedQuests = data.map(c => ({
+                        clue: c.clue_text,
+                        location: c.location,
+                        id: c.quest_number
+                    }))
+                    setClues(formattedQuests)
                 } else {
-                    console.log(`Clues document 'clues/${phaseDocTitle}' missing or 'quests' array field missing!`)
                     setClues([])
                 }
             } catch (err) {
@@ -92,8 +127,6 @@ export default function TasksPage({ onLeaderboard }) {
 
     const progress = lettersCollected.length
     const currentQuest = progress
-    console.log("Current Progress (currentQuest index):", currentQuest)
-
     const targetLetters = targetWord?.split('') || []
 
     // Automatically redirect to leaderboard after completion animation
@@ -134,28 +167,34 @@ export default function TasksPage({ onLeaderboard }) {
 
             try {
                 const updateData = {
-                    lettersCollected: newLetters,
-                    currentQuest: newLetters.length
+                    letters_collected: newLetters,
+                    current_quest: newLetters.length
                 }
 
                 if (isPhaseCompleted) {
                     if (phase === 1) {
-                        updateData.phase1Completed = true
-                        updateData.phase1Time = serverTimestamp()
+                        updateData.phase1_completed = true
+                        updateData.phase1_time = new Date().toISOString()
                     } else if (phase === 2) {
-                        updateData.phase2Completed = true
-                        updateData.phase2Time = serverTimestamp()
+                        updateData.phase2_completed = true
+                        updateData.phase2_time = new Date().toISOString()
                     }
 
                     // Automatic Winner Declaration if no one has won yet
                     if (!winnerDeclared) {
-                        updateDoc(doc(db, 'gameControl', 'currentPhase'), {
-                            winnerDeclared: true
-                        }).catch(err => console.error("Error declaring winner", err))
+                        await supabase
+                            .from('game_state')
+                            .update({ winner_declared: true })
+                            .eq('id', 1) // Assuming there is only one game state row with ID 1
                     }
                 }
 
-                await updateDoc(doc(db, 'treasure_hunt_participants', participantId), updateData)
+                const { error: updateError } = await supabase
+                    .from('participants')
+                    .update(updateData)
+                    .eq('id', participantId)
+
+                if (updateError) throw updateError
                 setTimeout(() => setIsSubmitting(false), 500)
             } catch (err) {
                 console.error("Error updating doc", err)
