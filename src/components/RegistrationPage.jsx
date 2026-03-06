@@ -4,13 +4,11 @@ import { db } from '../firebase/firebaseConfig'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import mapBg from '../assets/registration-map.jpg'
 
-export default function RegistrationPage() {
+export default function RegistrationPage({ onComplete }) {
   const [formData, setFormData] = useState({
     fullName: '',
-    email: '',
-    phone: '',
-    college: '',
-    teamName: ''
+    rollNumber: '',
+    branch: ''
   })
 
   const [participantID, setParticipantID] = useState('')
@@ -40,62 +38,55 @@ export default function RegistrationPage() {
 
     try {
       // Validation
-      if (!formData.fullName.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.college.trim()) {
+      if (!formData.fullName.trim() || !formData.rollNumber.trim() || !formData.branch.trim()) {
         setError('Please fill in all required fields.')
         setIsLoading(false)
         return
       }
 
-      // Email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(formData.email)) {
-        setError('Please enter a valid email address.')
-        setIsLoading(false)
-        return
-      }
-
-      // Phone validation
-      const phoneRegex = /^[0-9\-\+\s\(\)]{10,}$/
-      if (!phoneRegex.test(formData.phone)) {
-        setError('Please enter a valid phone number.')
-        setIsLoading(false)
-        return
-      }
-
-      // Generate participant ID
+      // Generate participant ID (for display purposes)
       const newParticipantID = generateParticipantID()
       setParticipantID(newParticipantID)
 
       // Save to Firestore
       const treasureHuntRef = collection(db, 'treasure_hunt_participants')
       const docData = {
-        id: newParticipantID,
         name: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        college: formData.college,
-        teamName: formData.teamName || 'Solo Explorer',
-        participantID: newParticipantID,
-        timestamp: serverTimestamp()
+        rollNumber: formData.rollNumber,
+        branch: formData.branch,
+        startTime: serverTimestamp(),
+        currentPhase: 1,
+        currentQuest: 0,
+        lettersCollected: [],
+        phase1Completed: false,
+        phase1Time: null,
+        phase2Completed: false,
+        phase2Time: null,
+        participantID: newParticipantID // Store the generated ID just in case
       }
 
       const docRef = await addDoc(treasureHuntRef, docData)
+
+      // Save doc.id to localStorage so TasksPage can act over it
+      localStorage.setItem('pirateHuntDocId', docRef.id)
 
       // Show success
       setSuccess(true)
       setFormData({
         fullName: '',
-        email: '',
-        phone: '',
-        college: '',
-        teamName: ''
+        rollNumber: '',
+        branch: ''
       })
 
-      // Reset after 5 seconds
+      // Reset after 8 seconds to give more time to see ID, then proceed if onComplete is provided
       setTimeout(() => {
-        setSuccess(false)
-        setParticipantID('')
-      }, 5000)
+        if (onComplete) {
+          onComplete(newParticipantID)
+        } else {
+          setSuccess(false)
+          setParticipantID('')
+        }
+      }, 7000)
 
     } catch (err) {
       console.error('Registration error:', err)
@@ -226,66 +217,35 @@ export default function RegistrationPage() {
                   />
                 </div>
 
-                {/* Email */}
+                {/* Roll Number */}
                 <div>
                   <label className="block text-white text-sm font-serif mb-2 uppercase tracking-[0.2em] font-bold drop-shadow-md">
-                    Parrot Mail
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-5 py-4 bg-[#fdf5e6]/10 border-2 border-white/10 rounded-2xl text-white font-serif focus:outline-none focus:border-pirate-gold focus:ring-4 focus:ring-pirate-gold/20 transition-all placeholder:text-white/20 backdrop-blur-sm"
-                    placeholder="email@vault.com"
-                    required
-                  />
-                </div>
-
-                {/* Phone Number */}
-                <div>
-                  <label className="block text-white text-sm font-serif mb-2 uppercase tracking-[0.2em] font-bold drop-shadow-md">
-                    Signal Wire
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className="w-full px-5 py-4 bg-[#fdf5e6]/10 border-2 border-white/10 rounded-2xl text-white font-serif focus:outline-none focus:border-pirate-gold focus:ring-4 focus:ring-pirate-gold/20 transition-all placeholder:text-white/20 backdrop-blur-sm"
-                    placeholder="Contact Number"
-                    required
-                  />
-                </div>
-
-                {/* College */}
-                <div>
-                  <label className="block text-white text-sm font-serif mb-2 uppercase tracking-[0.2em] font-bold drop-shadow-md">
-                    Fleet / College
+                    Roll Number
                   </label>
                   <input
                     type="text"
-                    name="college"
-                    value={formData.college}
+                    name="rollNumber"
+                    value={formData.rollNumber}
                     onChange={handleChange}
                     className="w-full px-5 py-4 bg-[#fdf5e6]/10 border-2 border-white/10 rounded-2xl text-white font-serif focus:outline-none focus:border-pirate-gold focus:ring-4 focus:ring-pirate-gold/20 transition-all placeholder:text-white/20 backdrop-blur-sm"
-                    placeholder="Department"
+                    placeholder="E.g. 23Bxxx"
                     required
                   />
                 </div>
 
-                {/* Team */}
+                {/* Branch */}
                 <div>
                   <label className="block text-white text-sm font-serif mb-2 uppercase tracking-[0.2em] font-bold drop-shadow-md">
-                    Crew / Team
+                    Branch / Department
                   </label>
                   <input
                     type="text"
-                    name="teamName"
-                    value={formData.teamName}
+                    name="branch"
+                    value={formData.branch}
                     onChange={handleChange}
                     className="w-full px-5 py-4 bg-[#fdf5e6]/10 border-2 border-white/10 rounded-2xl text-white font-serif focus:outline-none focus:border-pirate-gold focus:ring-4 focus:ring-pirate-gold/20 transition-all placeholder:text-white/20 backdrop-blur-sm"
-                    placeholder="Optional"
+                    placeholder="E.g. CSE"
+                    required
                   />
                 </div>
 

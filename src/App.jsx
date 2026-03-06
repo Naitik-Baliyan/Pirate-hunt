@@ -2,12 +2,18 @@ import { useState, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import BootScreen from './components/BootScreen'
 import BackgroundMusic from './components/BackgroundMusic'
+import ARDownloadScreen from './components/ARDownloadScreen'
 
 const StoryPage = lazy(() => import('./components/StoryPage'))
 const RegistrationPage = lazy(() => import('./components/RegistrationPage'))
+const HuntMap = lazy(() => import('./components/HuntMap'))
+const RulesPage = lazy(() => import('./components/RulesPage'))
+const TasksPage = lazy(() => import('./components/TasksPage'))
+const Leaderboard = lazy(() => import('./components/Leaderboard'))
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('boot') // boot, story, registration
+  const [currentPage, setCurrentPage] = useState('boot') // boot, story, registration, ar-download, hunt, rules, tasks, leaderboard
+  const [currentPhase, setCurrentPhase] = useState(1)
 
   const handleBootComplete = () => {
     setCurrentPage('story')
@@ -15,6 +21,27 @@ export default function App() {
 
   const handleStartHunt = () => {
     setCurrentPage('registration')
+  }
+
+  const handleRegistrationComplete = () => {
+    setCurrentPage('ar-download')
+  }
+
+  const handleARContinue = () => {
+    setCurrentPage('hunt')
+  }
+
+  const handleHuntComplete = () => {
+    setCurrentPage('rules')
+  }
+
+  const handleRulesComplete = () => {
+    setCurrentPage('tasks')
+  }
+
+  const handleLeaderboard = (phase) => {
+    setCurrentPhase(phase)
+    setCurrentPage('leaderboard')
   }
 
   return (
@@ -82,7 +109,80 @@ export default function App() {
               transition={{ duration: 0.8 }}
               className="w-full"
             >
-              <RegistrationPage />
+              <RegistrationPage onComplete={handleRegistrationComplete} />
+            </motion.div>
+          </Suspense>
+        )}
+
+        {currentPage === 'ar-download' && (
+          <motion.div
+            key="ar-download"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.05 }}
+            transition={{ duration: 0.8 }}
+            className="w-full h-screen"
+          >
+            <ARDownloadScreen onContinue={handleARContinue} />
+          </motion.div>
+        )}
+
+        {currentPage === 'hunt' && (
+          <Suspense fallback={<div className="w-full h-screen bg-[#0a101d]" />}>
+            <motion.div
+              key="hunt"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8 }}
+              className="w-full h-screen"
+            >
+              <HuntMap onComplete={handleHuntComplete} />
+            </motion.div>
+          </Suspense>
+        )}
+
+        {currentPage === 'rules' && (
+          <Suspense fallback={<div className="w-full h-screen bg-[#0a101d]" />}>
+            <motion.div
+              key="rules"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8 }}
+              className="w-full h-screen"
+            >
+              <RulesPage onContinue={handleRulesComplete} />
+            </motion.div>
+          </Suspense>
+        )}
+
+        {currentPage === 'tasks' && (
+          <Suspense fallback={<div className="w-full h-screen bg-[#0a101d]" />}>
+            <motion.div
+              key="tasks"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8 }}
+              className="w-full h-screen"
+            >
+              <TasksPage onLeaderboard={handleLeaderboard} />
+            </motion.div>
+          </Suspense>
+        )}
+
+        {currentPage === 'leaderboard' && (
+          <Suspense fallback={<div className="w-full h-screen bg-[#0a101d]" />}>
+            <motion.div
+              key="leaderboard"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8 }}
+              className="w-full h-screen overflow-y-auto"
+            >
+              <Leaderboard phase={currentPhase} />
             </motion.div>
           </Suspense>
         )}

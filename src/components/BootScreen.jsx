@@ -111,13 +111,14 @@ export default function BootScreen({ onBootComplete }) {
 
             {/* 4. Banner Text */}
             <motion.div
-              className="relative px-16 py-3 md:px-24 md:py-6 text-center"
+              className="relative px-6 py-4 sm:px-12 md:px-24 md:py-6 text-center"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 3, duration: 0.8 }}
             >
-              <h1 className="text-xl md:text-3xl font-serif font-black tracking-[0.1em] text-[#2c1810] uppercase drop-shadow-sm">
-                E-Cell MIET <span className="block md:inline mt-1 md:mt-0 md:ml-2 text-sm md:text-xl font-normal opacity-70">Presents</span>
+              <h1 className="text-lg leading-tight sm:text-xl md:text-3xl font-serif font-black tracking-[0.1em] text-[#2c1810] uppercase drop-shadow-sm flex flex-col md:flex-row items-center justify-center">
+                <span>E-Cell MIET</span>
+                <span className="md:ml-3 mt-1 md:mt-0 text-sm md:text-xl font-normal opacity-80">Presents</span>
               </h1>
             </motion.div>
           </div>
