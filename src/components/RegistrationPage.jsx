@@ -7,7 +7,10 @@ export default function RegistrationPage({ onComplete }) {
   const [formData, setFormData] = useState({
     fullName: '',
     rollNumber: '',
-    branch: ''
+    branch: '',
+    year: '1',
+    phoneNumber: '',
+    email: ''
   })
 
   const [participantID, setParticipantID] = useState('')
@@ -37,8 +40,23 @@ export default function RegistrationPage({ onComplete }) {
 
     try {
       // Validation
-      if (!formData.fullName.trim() || !formData.rollNumber.trim() || !formData.branch.trim()) {
+      if (!formData.fullName.trim() || !formData.rollNumber.trim() || !formData.branch.trim() || !formData.phoneNumber.trim() || !formData.email.trim()) {
         setError('Please fill in all required fields.')
+        setIsLoading(false)
+        return
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(formData.email)) {
+        setError('Please enter a valid email address.')
+        setIsLoading(false)
+        return
+      }
+
+      // Phone validation (simple)
+      if (formData.phoneNumber.length < 10) {
+        setError('Please enter a valid phone number.')
         setIsLoading(false)
         return
       }
@@ -55,12 +73,16 @@ export default function RegistrationPage({ onComplete }) {
             name: formData.fullName,
             roll_number: formData.rollNumber,
             branch: formData.branch,
+            year: formData.year,
+            phone_number: formData.phoneNumber,
+            email: formData.email,
             participant_id: newParticipantID,
             current_phase: 1,
-            current_quest: 0,
+            current_quest_index: 1,
             letters_collected: [],
-            phase1_completed: false,
-            phase2_completed: false
+            phase1_time: null,
+            phase2_time: null,
+            completion_time: null
           }
         ])
         .select()
@@ -70,14 +92,17 @@ export default function RegistrationPage({ onComplete }) {
       // Save doc.id to localStorage so TasksPage can act over it
       // Supabase returns an array for insert.select()
       const participant = data[0]
-      localStorage.setItem('pirateHuntDocId', participant.id)
+      localStorage.setItem('pirateHuntDocId', participant.participant_id)
 
       // Show success
       setSuccess(true)
       setFormData({
         fullName: '',
         rollNumber: '',
-        branch: ''
+        branch: '',
+        year: '1',
+        phoneNumber: '',
+        email: ''
       })
 
       // Reset after 8 seconds to give more time to see ID, then proceed if onComplete is provided
@@ -238,15 +263,66 @@ export default function RegistrationPage({ onComplete }) {
                 {/* Branch */}
                 <div className="w-full px-4">
                   <label className="block text-white text-[10px] sm:text-xs md:text-sm font-serif mb-2 uppercase tracking-[0.2em] font-bold drop-shadow-md opacity-100 pl-6">
-                    Branch / Department
+                    Branch
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="branch"
                     value={formData.branch}
                     onChange={handleChange}
+                    className="w-full px-5 py-4 bg-[#1a2b3c] border-2 border-white/20 rounded-2xl text-white font-serif focus:outline-none focus:border-pirate-gold focus:ring-4 focus:ring-pirate-gold/20 transition-all backdrop-blur-sm min-h-[48px] appearance-none"
+                    required
+                  >
+                    <option value="" disabled>Select Branch</option>
+                    <option value="BTech">BTech</option>
+                    <option value="MCA">MCA</option>
+                  </select>
+                </div>
+
+                {/* Year */}
+                <div className="w-full px-4">
+                  <label className="block text-white text-[10px] sm:text-xs md:text-sm font-serif mb-2 uppercase tracking-[0.2em] font-bold drop-shadow-md opacity-100 pl-6">
+                    Year
+                  </label>
+                  <select
+                    name="year"
+                    value={formData.year}
+                    onChange={handleChange}
+                    className="w-full px-5 py-4 bg-[#1a2b3c] border-2 border-white/20 rounded-2xl text-white font-serif focus:outline-none focus:border-pirate-gold focus:ring-4 focus:ring-pirate-gold/20 transition-all backdrop-blur-sm min-h-[48px] appearance-none"
+                    required
+                  >
+                    <option value="1">First Year</option>
+                    <option value="2">Second Year</option>
+                  </select>
+                </div>
+
+                {/* Phone Number */}
+                <div className="w-full px-4">
+                  <label className="block text-white text-[10px] sm:text-xs md:text-sm font-serif mb-2 uppercase tracking-[0.2em] font-bold drop-shadow-md opacity-100 pl-6">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
                     className="w-full px-5 py-4 bg-white/10 border-2 border-white/20 rounded-2xl text-white font-serif focus:outline-none focus:border-pirate-gold focus:ring-4 focus:ring-pirate-gold/20 transition-all placeholder:text-white/40 backdrop-blur-sm min-h-[48px]"
-                    placeholder="E.g. CSE"
+                    placeholder="Enter Phone Number"
+                    required
+                  />
+                </div>
+
+                {/* Email Address */}
+                <div className="md:col-span-2 px-4">
+                  <label className="block text-white text-[10px] sm:text-xs md:text-sm font-serif mb-2 uppercase tracking-[0.2em] font-bold drop-shadow-md opacity-100 pl-6">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full px-5 py-4 bg-white/10 border-2 border-white/20 rounded-2xl text-white font-serif focus:outline-none focus:border-pirate-gold focus:ring-4 focus:ring-pirate-gold/20 transition-all placeholder:text-white/40 backdrop-blur-sm min-h-[48px]"
+                    placeholder="Enter Email Address"
                     required
                   />
                 </div>

@@ -5,18 +5,11 @@ import { supabase } from '../supabaseClient'
 import tasksBg from '../assets/registration-map.jpg'
 
 export default function TasksPage({ onLeaderboard }) {
-    const [targetWord, setTargetWord] = useState('ECELL')
-    const [phaseCompleted, setPhaseCompleted] = useState(false)
-    const [duration, setDuration] = useState(0)
-    const [startTime, setStartTime] = useState(null)
-    const [winnerDeclared, setWinnerDeclared] = useState(false)
-    const [lettersCollected, setLettersCollected] = useState([])
+    const [gameState, setGameState] = useState({ current_phase: 1, phase1_winner_declared: false, phase2_winner_declared: false, phase3_winner_declared: false })
+    const [participant, setParticipant] = useState(null)
     const [clues, setClues] = useState([])
-
     const [inputValue, setInputValue] = useState('')
-    const [currentQuest, setCurrentQuest] = useState(1) // Source of truth for quest progress
     const [errorMsg, setErrorMsg] = useState('')
-    const [showCompletion, setShowCompletion] = useState(false)
     const [isLoaded, setIsLoaded] = useState(false)
     const [expandedQuestId, setExpandedQuestId] = useState(1)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -39,72 +32,63 @@ export default function TasksPage({ onLeaderboard }) {
                 .single()
 
             if (data && !error) {
-                setPhase(data.current_phase || 1)
-                setTargetWord(data.current_word || 'IDEAS')
-                setWinnerDeclared(data.winner_declared || false)
+                setGameState({
+                    current_phase: data.current_phase || 1,
+                    phase1_winner_declared: data.phase1_winner_declared || false,
+                    phase2_winner_declared: data.phase2_winner_declared || false,
+                    phase3_winner_declared: data.phase3_winner_declared || false,
+                    target_word: data.target_word || (data.current_phase === 1 ? 'I451S' : data.current_phase === 2 ? '7H3N4' : '8P1R4')
+                })
             }
         }
-        fetchGameControl()
 
         // 2. Initial Fetch for Participant
         const fetchParticipant = async () => {
             const { data, error } = await supabase
                 .from('participants')
                 .select('*')
-                .eq('id', participantId)
+                .eq('participant_id', participantId)
                 .single()
 
             if (data && !error) {
-                setLettersCollected(data.letters_collected || [])
-                const savedQuest = data.current_quest || 1
-                setCurrentQuest(savedQuest)
-                setExpandedQuestId(savedQuest >= 5 ? 5 : savedQuest)
-
-                // Simplified completion check
-                if (data.completion_duration !== null && data.completion_duration !== undefined) {
-                    setDuration(data.completion_duration)
-                    setPhaseCompleted(true)
-                    setShowCompletion(true)
-                }
+                setParticipant(data)
+                setExpandedQuestId(data.current_quest_index >= 5 ? 5 : data.current_quest_index)
 
                 // Track start time
-                if (data.start_time) {
-                    setStartTime(new Date(data.start_time))
-                } else if (!data.completion_duration) {
-                    // Record start time if not already set and not finished
+                if (!data.start_time && !data.completion_time) {
                     const now = new Date()
-                    supabase.from('participants').update({ start_time: now.toISOString() }).eq('id', participantId).then(() => {
-                        setStartTime(now)
-                    })
+                    await supabase.from('participants').update({ start_time: now.toISOString() }).eq('participant_id', participantId)
+                    data.start_time = now.toISOString()
+                    setParticipant({ ...data })
                 }
             }
-            if (!isLoaded) setIsLoaded(true)
+            setIsLoaded(true)
         }
+
+        fetchGameControl()
         fetchParticipant()
 
         // 3. Real-time Subscription for Game State
         const gameStateChannel = supabase.channel('game_state_changes')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_state' }, payload => {
                 const data = payload.new
-                setPhase(data.current_phase || 1)
-                setTargetWord(data.current_word || 'IDEAS')
-                setWinnerDeclared(data.winner_declared || false)
+                setGameState({
+                    current_phase: data.current_phase || 1,
+                    phase1_winner_declared: data.phase1_winner_declared || false,
+                    phase2_winner_declared: data.phase2_winner_declared || false,
+                    phase3_winner_declared: data.phase3_winner_declared || false,
+                    target_word: data.target_word
+                })
             })
             .subscribe()
 
         // 4. Real-time Subscription for Participant
         const participantChannel = supabase.channel(`participant_${participantId}`)
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'participants', filter: `id=eq.${participantId}` }, payload => {
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'participants', filter: `participant_id=eq.${participantId}` }, payload => {
                 const data = payload.new
-                setLettersCollected(data.letters_collected || [])
-                const savedQuest = data.current_quest || 1
-                setCurrentQuest(savedQuest)
-                setExpandedQuestId(savedQuest >= 5 ? 5 : savedQuest)
-
-                if (data.completion_duration) {
-                    setDuration(data.completion_duration)
-                    setShowCompletion(true)
-                    setPhaseCompleted(true)
+                setParticipant(data)
+                if (data.current_phase !== 4) {
+                    setExpandedQuestId(data.current_quest_index >= 5 ? 5 : data.current_quest_index)
                 }
             })
             .subscribe()
@@ -115,23 +99,23 @@ export default function TasksPage({ onLeaderboard }) {
         }
     }, [participantId])
 
-    // Dynamic Clues Fetcher
     useEffect(() => {
+        if (!participant || participant.current_phase === 4) return
+
         const fetchClues = async () => {
             try {
                 const { data, error } = await supabase
                     .from('clues')
                     .select('*')
+                    .eq('phase_number', participant.current_phase)
                     .order('quest_number', { ascending: true })
                     .limit(5)
 
                 if (data && !error) {
-                    // Map clues to the expected quest structure
                     const formattedQuests = data.map(c => ({
                         clue: c.clue_text,
-                        location: c.location,
                         id: c.quest_number,
-                        answer: c.answer // Added answer for validation
+                        answer: c.answer_code
                     }))
                     setClues(formattedQuests)
                 } else {
@@ -143,27 +127,39 @@ export default function TasksPage({ onLeaderboard }) {
             }
         }
         fetchClues()
-    }, []) // Logic simplified, fetch all 5 at once
+    }, [participant?.current_phase])
 
+    const currentQuest = participant?.current_quest_index || 1
+    const lettersCollected = participant?.letters_collected || []
     const progress = lettersCollected.length
-    const targetLetters = targetWord?.split('') || []
 
-    // Removed auto-redirect. Now handled by manual button in UI.
+    // Derived target string based on user phase
+    // Derived target string based on user phase or game state
+    const targetWord = participant?.current_phase === 1 ? (gameState.current_phase === 1 ? gameState.target_word || 'I451S' : 'I451S') :
+        participant?.current_phase === 2 ? (gameState.current_phase === 2 ? gameState.target_word || '7H3N4' : '7H3N4') :
+            participant?.current_phase === 3 ? (gameState.current_phase === 3 ? gameState.target_word || '8P1R4' : '8P1R4') :
+                'I451S'
+    const targetLetters = targetWord.split('')
 
     const handleSumbitLetter = async (e) => {
         e.preventDefault()
-        if (isSubmitting) return
+        if (isSubmitting || !participant) return
 
         setIsSubmitting(true)
         setErrorMsg('')
 
-        if (winnerDeclared) {
-            setErrorMsg('Hunt Concluded!')
-            setTimeout(() => { setErrorMsg(''); setIsSubmitting(false) }, 3000)
+        if (progress >= targetLetters.length || participant.current_phase === 4) {
+            setIsSubmitting(false)
             return
         }
 
-        if (progress >= targetLetters.length || !participantId) {
+        // Fetch latest game state to check if phase is closed or winner declared
+        const { data: gs, error: gsError } = await supabase.from('game_state').select('*').single()
+
+        // Block submissions for Phase 3 if a winner is already declared
+        if (participant.current_phase === 3 && gs && gs.phase3_winner_declared) {
+            setErrorMsg('Hunt Concluded! The treasure has been claimed.')
+            setTimeout(() => setErrorMsg(''), 5000)
             setIsSubmitting(false)
             return
         }
@@ -178,65 +174,99 @@ export default function TasksPage({ onLeaderboard }) {
         const cleanedInput = inputValue.trim().toUpperCase()
         const correctAnswer = currentClue.answer?.trim().toUpperCase()
 
-        console.log("User input:", cleanedInput)
-        console.log("Correct answer:", correctAnswer)
-
         if (cleanedInput === correctAnswer) {
-            console.log("Quest unlocked")
             const newLetters = [...lettersCollected, cleanedInput]
             const nextQuestNum = currentQuest + 1
-            const isFinished = currentQuest >= 5
+            const isFinishedPhase = currentQuest >= 5
 
             setInputValue('')
 
             try {
-                const updateData = {
+                let updateData = {
                     letters_collected: newLetters,
-                    current_quest: currentQuest + 1
+                    current_quest_index: nextQuestNum
                 }
 
-                if (isFinished) {
-                    const compTime = new Date()
-                    const startDT = startTime || new Date()
-                    const durSeconds = Math.floor((compTime - startDT) / 1000)
+                if (isFinishedPhase) {
+                    const now = new Date()
 
-                    updateData.completion_time = compTime.toISOString()
-                    updateData.completion_duration = durSeconds
-                    setDuration(durSeconds)
+                    // Fetch latest game state to avoid race conditions
+                    const { data: gs } = await supabase.from('game_state').select('*').single()
 
-                    if (!winnerDeclared) {
-                        await supabase
-                            .from('game_state')
-                            .update({ winner_declared: true })
-                            .eq('id', 1)
+                    if (participant.current_phase === 1) {
+                        updateData.phase1_time = now.toISOString()
+                        if (gs && !gs.phase1_winner_declared) {
+                            // First to finish phase 1! Winner!
+                            await supabase.from('game_state').update({ phase1_winner_declared: true }).eq('id', 1)
+                            updateData.is_phase1_winner = true
+                            updateData.current_phase = 4 // Final Finished State
+                            updateData.completion_time = now.toISOString()
+
+                            // Calculate duration from start_time
+                            if (participant.start_time) {
+                                const start = new Date(participant.start_time)
+                                updateData.completion_duration = Math.floor((now - start) / 1000)
+                            }
+                        } else {
+                            // Already have a phase 1 winner, move this person to phase 2
+                            updateData.current_phase = 2
+                            updateData.current_quest_index = 1
+                            updateData.letters_collected = []
+                        }
+                    } else if (participant.current_phase === 2) {
+                        updateData.phase2_time = now.toISOString()
+                        if (gs && !gs.phase2_winner_declared) {
+                            // First to finish phase 2! Winner!
+                            await supabase.from('game_state').update({ phase2_winner_declared: true }).eq('id', 1)
+                            updateData.is_phase2_winner = true
+                            updateData.current_phase = 4 // Final Finished State
+                            updateData.completion_time = now.toISOString()
+
+                            // Calculate duration from start_time
+                            if (participant.start_time) {
+                                const start = new Date(participant.start_time)
+                                updateData.completion_duration = Math.floor((now - start) / 1000)
+                            }
+                        } else {
+                            // Already have a phase 2 winner, move this person to phase 3
+                            updateData.current_phase = 3
+                            updateData.current_quest_index = 1
+                            updateData.letters_collected = []
+                        }
+                    } else if (participant.current_phase === 3) {
+                        updateData.phase3_time = now.toISOString()
+                        updateData.completion_time = now.toISOString()
+                        updateData.current_phase = 4 // Final Finished State
+
+                        // Calculate duration from start_time
+                        if (participant.start_time) {
+                            const start = new Date(participant.start_time)
+                            updateData.completion_duration = Math.floor((now - start) / 1000)
+                        }
+
+                        if (gs && !gs.phase3_winner_declared) {
+                            // First to finish phase 3! Winner!
+                            await supabase.from('game_state').update({ phase3_winner_declared: true }).eq('id', 1)
+                            updateData.is_phase3_winner = true
+                        }
                     }
                 }
 
                 const { error: updateError } = await supabase
                     .from('participants')
                     .update(updateData)
-                    .eq('id', participantId)
+                    .eq('participant_id', participantId)
 
                 if (updateError) throw updateError
 
-                // Immediately update local state
-                if (isFinished) {
-                    setShowCompletion(true)
-                    setPhaseCompleted(true)
-                }
-                setCurrentQuest(nextQuestNum)
-                setLettersCollected(newLetters)
-                setExpandedQuestId(nextQuestNum > 5 ? 5 : nextQuestNum)
-
-                setTimeout(() => setIsSubmitting(false), 500)
             } catch (err) {
                 console.error("Error updating participant progress:", err)
                 setErrorMsg('Network error. Try again.')
+            } finally {
                 setTimeout(() => setIsSubmitting(false), 500)
             }
         } else {
-            console.log("Incorrect answer")
-            setErrorMsg('Incorrect letter. Keep searching!')
+            setErrorMsg('Incorrect answer. Keep searching!')
             setTimeout(() => setErrorMsg(''), 3000)
             setTimeout(() => setIsSubmitting(false), 500)
         }
@@ -263,7 +293,7 @@ export default function TasksPage({ onLeaderboard }) {
 
             {/* Main Interface */}
             <AnimatePresence mode="wait">
-                {showCompletion ? (
+                {participant?.current_phase === 4 ? (
                     <motion.div
                         key="completion"
                         className="relative z-10 w-full max-w-2xl flex flex-col items-center justify-center min-h-[70vh] text-center"
@@ -280,12 +310,32 @@ export default function TasksPage({ onLeaderboard }) {
                         </motion.div>
 
                         <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-pirate-gold mb-4 drop-shadow-lg tracking-widest uppercase leading-tight px-4">
-                            Treasure Hunt Completed!
+                            {participant?.is_phase1_winner ? "Phase 1 Winner!" : participant?.is_phase2_winner ? "Phase 2 Winner!" : participant?.is_phase3_winner ? "Phase 3 Winner!" : "Treasure Hunt Completed!"}
                         </h1>
 
-                        <div className="text-white text-xl md:text-2xl font-mono mb-6 bg-[#0a101d]/60 px-6 py-2 rounded-full border border-pirate-gold/30">
-                            Time Taken: {Math.floor(duration / 60)}m {(duration % 60).toString().padStart(2, '0')}s
-                        </div>
+                        {participant?.is_phase1_winner && (
+                            <p className="text-white text-lg font-mono mb-4 text-center max-w-md">
+                                You are the triumphant winner of Phase 1! As the sovereign, you rest while your crew battles in subsequent phases.
+                            </p>
+                        )}
+
+                        {participant?.is_phase2_winner && (
+                            <p className="text-white text-lg font-mono mb-4 text-center max-w-md">
+                                You are the triumphant winner of Phase 2! As the sovereign, you rest while your crew battles in Phase 3.
+                            </p>
+                        )}
+
+                        {participant?.is_phase3_winner && (
+                            <p className="text-white text-lg font-mono mb-4 text-center max-w-md">
+                                All Hail! You have claimed the ultimate treasure and won Phase 3!
+                            </p>
+                        )}
+
+                        {participant?.completion_duration && (
+                            <div className="text-white text-xl md:text-2xl font-mono mb-6 bg-[#0a101d]/60 px-6 py-2 rounded-full border border-pirate-gold/30">
+                                Time Taken: {Math.floor(participant.completion_duration / 60)}m {(participant.completion_duration % 60).toString().padStart(2, '0')}s
+                            </div>
+                        )}
 
                         <motion.div
                             className="bg-[#0a101d]/80 border-2 border-pirate-gold rounded-3xl p-6 md:p-12 my-6 md:my-8 backdrop-blur-md shadow-[0_0_50px_rgba(212,175,55,0.3)] w-full max-w-sm md:max-w-none"
@@ -337,7 +387,7 @@ export default function TasksPage({ onLeaderboard }) {
                     >
                         <div className="text-center mb-6 md:mb-8">
                             <h1 className="text-[rgb(44,24,16)] text-3xl sm:text-4xl md:text-6xl md:text-pirate-gold drop-shadow-lg md:drop-shadow-[0_4px_10px_rgba(212,175,55,0.4)] tracking-[0.15em] uppercase font-black leading-tight">
-                                Treasure Hunt
+                                Phase {participant?.current_phase || 1}
                             </h1>
 
                             {/* Letters Progress Bar */}
@@ -386,7 +436,7 @@ export default function TasksPage({ onLeaderboard }) {
                                     </p>
                                 </div>
                             ) : (
-                                clues.slice(0, currentQuest).map((clueData, index) => {
+                                clues.slice(0, currentQuest + 1).map((clueData, index) => {
                                     const id = clueData.id
                                     const isCompleted = id < currentQuest
                                     const isActive = id === currentQuest
@@ -438,7 +488,7 @@ export default function TasksPage({ onLeaderboard }) {
                                                                 {(isActive || isCompleted) ? (
                                                                     <div className="space-y-4 pr-0 md:pr-6">
                                                                         <div className="flex gap-2 text-sm md:text-base uppercase tracking-widest font-bold text-[#2c1810]/70 md:text-pirate-gold/70 border-b border-[#2c1810]/20 md:border-pirate-gold/20 pb-2 inline-flex">
-                                                                            <span>📍</span> Location Hint
+                                                                            <span>📜</span> Riddle
                                                                         </div>
                                                                         <p className="text-lg md:text-xl font-serif text-[#2c1810] md:text-[#fdf5e6] italic leading-relaxed whitespace-pre-line drop-shadow-sm">
                                                                             "{clueData?.clue || 'Clue missing from scroll.'}"
@@ -476,11 +526,11 @@ export default function TasksPage({ onLeaderboard }) {
                                                                         />
                                                                         <motion.button
                                                                             type="submit"
-                                                                            disabled={!inputValue || winnerDeclared || isSubmitting}
+                                                                            disabled={!inputValue || isSubmitting}
                                                                             className="w-full mt-2 px-6 py-4 md:py-3 bg-pirate-gold text-[#2c1810] font-black font-serif uppercase tracking-widest rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#ffcc33] transition-colors shadow-md active:scale-95"
-                                                                            whileTap={(!winnerDeclared && !isSubmitting) ? { scale: 0.95 } : {}}
+                                                                            whileTap={!isSubmitting ? { scale: 0.95 } : {}}
                                                                         >
-                                                                            {winnerDeclared ? 'Concluded' : isSubmitting ? 'Unlocking...' : 'Unlock'}
+                                                                            {isSubmitting ? 'Unlocking...' : 'Unlock'}
                                                                         </motion.button>
                                                                         <AnimatePresence>
                                                                             {errorMsg && (

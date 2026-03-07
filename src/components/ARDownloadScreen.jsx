@@ -47,17 +47,22 @@ export default function ARDownloadScreen({ onContinue }) {
                 </div>
 
                 <div className="flex flex-col items-center gap-4 md:gap-6 w-full max-w-md">
+                    <div className="w-full bg-red-900/40 border border-red-500/50 rounded-xl p-4 mb-4 text-center">
+                        <p className="text-white text-xs sm:text-sm font-bold tracking-widest uppercase">
+                            ⚠️ Notice: Scanner available for Android phones only
+                        </p>
+                    </div>
+
                     <motion.a
-                        href="#"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href="/scanner.apk" // Assuming the apk will be placed in public folder
+                        download
                         className="w-full relative overflow-hidden bg-pirate-gold px-6 py-4 rounded-2xl font-black text-black uppercase tracking-[0.15em] shadow-[0_20px_40px_rgba(212,175,55,0.3)] transition-all flex items-center justify-center gap-3 group"
                         whileHover={{ scale: 1.02, backgroundColor: '#ffcc33', boxShadow: '0 25px 50px rgba(212,175,55,0.5)' }}
                         whileTap={{ scale: 0.98 }}
                     >
-                        <span className="text-xl">📱</span>
+                        <span className="text-xl">🤖</span>
                         <span className="relative z-10 text-base sm:text-lg md:text-xl drop-shadow-sm font-black text-center">
-                            Download AR Scanner
+                            Download for Android
                         </span>
                         <motion.div
                             className="absolute inset-0 bg-white/30 -translate-x-full transition-transform duration-700 group-hover:translate-x-full"

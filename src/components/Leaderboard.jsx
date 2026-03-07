@@ -15,9 +15,9 @@ export default function Leaderboard() {
                 const { data, error } = await supabase
                     .from('participants')
                     .select('*')
-                    .not('completion_duration', 'is', null)
-                    .order('completion_duration', { ascending: true })
-                    .limit(20)
+                    .not('completion_time', 'is', null)
+                    .order('completion_time', { ascending: true })
+                    .limit(50)
 
                 if (data && !error) {
                     setLeaders(data)
@@ -29,10 +29,27 @@ export default function Leaderboard() {
             }
         }
 
-        fetchLeaderboard()
+        const fetchGameState = async () => {
+            const { data } = await supabase.from('game_state').select('*').single()
+            if (data) {
+                setWinnerDeclared(data.phase3_winner_declared)
+            }
+        }
 
-        const interval = setInterval(fetchLeaderboard, 30000)
-        return () => clearInterval(interval)
+        fetchLeaderboard()
+        fetchGameState()
+
+        // Realtime Subscription
+        const channel = supabase.channel('leaderboard_changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'participants' }, () => {
+                fetchLeaderboard()
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'game_state' }, (payload) => {
+                if (payload.new) setWinnerDeclared(payload.new.phase3_winner_declared)
+            })
+            .subscribe()
+
+        return () => supabase.removeChannel(channel)
     }, [])
 
     const getRankMedal = (index) => {
@@ -42,11 +59,10 @@ export default function Leaderboard() {
         return `${index + 1}`
     }
 
-    const formatDuration = (seconds) => {
-        if (seconds === null || seconds === undefined) return '--:--'
-        const mins = Math.floor(seconds / 60)
-        const secs = seconds % 60
-        return `${mins}m ${secs.toString().padStart(2, '0')}s`
+    const formatTime = (isoString) => {
+        if (!isoString) return '--:--'
+        const date = new Date(isoString)
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
     }
 
     return (
@@ -143,10 +159,10 @@ export default function Leaderboard() {
                                                 {leader.roll_number || '---'}
                                             </td>
                                             <td className="p-4 md:p-6 text-white/80 hidden lg:table-cell uppercase tracking-wider">
-                                                {leader.branch || '---'}
+                                                {leader.branch || '---'} {leader.is_phase1_winner ? '(P1 Winner)' : leader.is_phase2_winner ? '(P2 Winner)' : leader.is_phase3_winner ? '(P3 Winner)' : '(Finished)'}
                                             </td>
                                             <td className="p-4 md:p-6 text-[#fdf5e6] text-right font-mono text-lg font-bold">
-                                                {formatDuration(leader.completion_duration)}
+                                                {formatTime(leader.completion_time)}
                                             </td>
                                         </motion.tr>
                                     ))
@@ -180,13 +196,13 @@ export default function Leaderboard() {
                                                     <span className="text-[#fdf5e6] font-serif font-black text-xl uppercase tracking-widest leading-none mb-1">
                                                         {leader.name}
                                                     </span>
-                                                    <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-2 mt-1">
                                                         <span className="text-pirate-gold/70 font-mono text-xs tracking-widest uppercase">
                                                             {leader.roll_number || '---'}
                                                         </span>
                                                         <span className="text-white/30 text-xs">|</span>
                                                         <span className="text-white/50 font-serif italic text-xs uppercase tracking-tighter">
-                                                            {leader.branch || 'Crew'}
+                                                            {leader.branch || 'Crew'} {leader.is_phase1_winner ? '(P1 Winner)' : leader.is_phase2_winner ? '(P2 Winner)' : leader.is_phase3_winner ? '(P3 Winner)' : ''}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -194,7 +210,7 @@ export default function Leaderboard() {
                                             <div className="text-right flex flex-col items-end">
                                                 <div className="bg-[#2c1810]/80 px-3 py-1.5 rounded-lg border border-pirate-gold/40 shadow-lg">
                                                     <span className="text-pirate-gold font-mono text-sm font-black whitespace-nowrap">
-                                                        {formatDuration(leader.completion_duration)}
+                                                        {formatTime(leader.completion_time)}
                                                     </span>
                                                 </div>
                                             </div>
