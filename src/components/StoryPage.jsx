@@ -58,7 +58,7 @@ export default function StoryPage({ onStartHunt }) {
   return (
     <div
       className="w-full h-screen relative flex items-center justify-center overflow-hidden cursor-pointer touch-none bg-[#0a1a2e]"
-      onClick={handleInteraction}
+      onPointerDown={handleInteraction}
     >
       {/* Background Layer: Story Map Blend */}
       <div className="absolute inset-0 z-0 select-none pointer-events-none">

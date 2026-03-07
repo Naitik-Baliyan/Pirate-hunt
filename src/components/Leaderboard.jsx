@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../supabaseClient'
 import mapBg from '../assets/registration-map.jpg' // Using map background for consistency
 
-export default function Leaderboard({ phase }) {
+export default function Leaderboard() {
     const [leaders, setLeaders] = useState([])
     const [loading, setLoading] = useState(true)
     const [winnerDeclared, setWinnerDeclared] = useState(false)
@@ -12,14 +12,11 @@ export default function Leaderboard({ phase }) {
         const fetchLeaderboard = async () => {
             setLoading(true)
             try {
-                const completedField = phase === 1 ? 'phase1_completed' : 'phase2_completed'
-                const timeField = phase === 1 ? 'phase1_time' : 'phase2_time'
-
                 const { data, error } = await supabase
                     .from('participants')
                     .select('*')
-                    .eq(completedField, true)
-                    .order(timeField, { ascending: true })
+                    .not('completion_duration', 'is', null)
+                    .order('completion_duration', { ascending: true })
                     .limit(20)
 
                 if (data && !error) {
@@ -34,20 +31,9 @@ export default function Leaderboard({ phase }) {
 
         fetchLeaderboard()
 
-        // Listener for Game Control (to check if hunt is concluded)
-        const unsubControl = supabase.channel('game_state_leaderboard')
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_state' }, payload => {
-                setWinnerDeclared(payload.new.winner_declared || false)
-            })
-            .subscribe()
-
-        // Auto-refresh every 30 seconds
         const interval = setInterval(fetchLeaderboard, 30000)
-        return () => {
-            clearInterval(interval)
-            supabase.removeChannel(unsubControl)
-        }
-    }, [phase])
+        return () => clearInterval(interval)
+    }, [])
 
     const getRankMedal = (index) => {
         if (index === 0) return '🥇'
@@ -56,10 +42,11 @@ export default function Leaderboard({ phase }) {
         return `${index + 1}`
     }
 
-    const formatTime = (timeString) => {
-        if (!timeString) return '--:--'
-        const date = new Date(timeString)
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const formatDuration = (seconds) => {
+        if (seconds === null || seconds === undefined) return '--:--'
+        const mins = Math.floor(seconds / 60)
+        const secs = seconds % 60
+        return `${mins}m ${secs.toString().padStart(2, '0')}s`
     }
 
     return (
@@ -107,7 +94,7 @@ export default function Leaderboard({ phase }) {
                         Captain's Log
                     </h1>
                     <p className="text-[#fdf5e6]/80 font-serif text-lg tracking-[0.2em] uppercase mt-4">
-                        Top Treasure Hunters - Phase {phase}
+                        Top Treasure Hunters
                     </p>
                 </div>
 
@@ -153,13 +140,13 @@ export default function Leaderboard({ phase }) {
                                                 {leader.name}
                                             </td>
                                             <td className="p-4 md:p-6 text-pirate-gold/80 font-bold font-mono text-lg">
-                                                {leader.rollNumber}
+                                                {leader.roll_number || '---'}
                                             </td>
                                             <td className="p-4 md:p-6 text-white/80 hidden lg:table-cell uppercase tracking-wider">
-                                                {leader.branch}
+                                                {leader.branch || '---'}
                                             </td>
                                             <td className="p-4 md:p-6 text-[#fdf5e6] text-right font-mono text-lg font-bold">
-                                                {formatTime(phase === 1 ? leader.phase1Time : leader.phase2Time)}
+                                                {formatDuration(leader.completion_duration)}
                                             </td>
                                         </motion.tr>
                                     ))
@@ -174,47 +161,52 @@ export default function Leaderboard({ phase }) {
                             <div className="p-12 text-center text-pirate-gold animate-pulse text-lg tracking-widest">
                                 Unrolling the records...
                             </div>
-                        ) : leaders.length === 0 ? (
-                            <div className="p-12 text-center text-white/50 text-lg tracking-widest italic">
-                                No sailors found.
-                            </div>
                         ) : (
-                            leaders.map((leader, index) => (
-                                <motion.div
-                                    key={leader.id}
-                                    className="p-4 flex flex-col gap-3 relative overflow-hidden"
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: index * 0.1 }}
-                                >
-                                    {/* Rank Badge */}
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-3xl filter drop-shadow-md">
-                                                {getRankMedal(index)}
-                                            </span>
-                                            <div className="flex flex-col">
-                                                <span className="text-[#fdf5e6] font-serif font-black text-lg uppercase tracking-tight leading-tight">
-                                                    {leader.name}
+                            <div className="flex flex-col">
+                                {leaders.map((leader, index) => (
+                                    <motion.div
+                                        key={leader.id}
+                                        className={`p-6 flex flex-col gap-4 relative overflow-hidden border-b border-pirate-gold/10 ${index === 0 ? 'bg-pirate-gold/5' : ''}`}
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: index * 0.1 }}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <span className="text-4xl filter drop-shadow-[0_0_8px_rgba(212,175,55,0.5)]">
+                                                    {getRankMedal(index)}
                                                 </span>
-                                                <span className="text-pirate-gold/70 font-mono text-xs tracking-widest uppercase">
-                                                    {leader.rollNumber}
-                                                </span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-[#fdf5e6] font-serif font-black text-xl uppercase tracking-widest leading-none mb-1">
+                                                        {leader.name}
+                                                    </span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-pirate-gold/70 font-mono text-xs tracking-widest uppercase">
+                                                            {leader.roll_number || '---'}
+                                                        </span>
+                                                        <span className="text-white/30 text-xs">|</span>
+                                                        <span className="text-white/50 font-serif italic text-xs uppercase tracking-tighter">
+                                                            {leader.branch || 'Crew'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="text-right flex flex-col items-end">
+                                                <div className="bg-[#2c1810]/80 px-3 py-1.5 rounded-lg border border-pirate-gold/40 shadow-lg">
+                                                    <span className="text-pirate-gold font-mono text-sm font-black whitespace-nowrap">
+                                                        {formatDuration(leader.completion_duration)}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="text-right flex flex-col items-end">
-                                            <span className="text-white font-mono text-sm font-bold bg-[#2c1810]/60 px-2 py-1 rounded-md border border-pirate-gold/20">
-                                                {formatTime(phase === 1 ? leader.phase1Time : leader.phase2Time)}
-                                            </span>
-                                        </div>
-                                    </div>
 
-                                    {/* Subtle highlight for top 3 */}
-                                    {index < 3 && (
-                                        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-pirate-gold/10 via-transparent to-transparent pointer-events-none" />
-                                    )}
-                                </motion.div>
-                            ))
+                                        {/* Subtle highlight for top 3 */}
+                                        {index < 3 && (
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-pirate-gold/15 via-transparent to-transparent pointer-events-none" />
+                                        )}
+                                    </motion.div>
+                                ))}
+                            </div>
                         )}
                     </div>
                 </div>

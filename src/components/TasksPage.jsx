@@ -1,21 +1,26 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import tasksBg from '../assets/registration-map.jpg'
 
 export default function TasksPage({ onLeaderboard }) {
-    const [phase, setPhase] = useState(1)
-    const [targetWord, setTargetWord] = useState('IDEAS')
+    const [targetWord, setTargetWord] = useState('ECELL')
+    const [phaseCompleted, setPhaseCompleted] = useState(false)
+    const [duration, setDuration] = useState(0)
+    const [startTime, setStartTime] = useState(null)
     const [winnerDeclared, setWinnerDeclared] = useState(false)
     const [lettersCollected, setLettersCollected] = useState([])
     const [clues, setClues] = useState([])
 
     const [inputValue, setInputValue] = useState('')
+    const [currentQuest, setCurrentQuest] = useState(1) // Source of truth for quest progress
     const [errorMsg, setErrorMsg] = useState('')
     const [showCompletion, setShowCompletion] = useState(false)
     const [isLoaded, setIsLoaded] = useState(false)
     const [expandedQuestId, setExpandedQuestId] = useState(1)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const navigate = useNavigate()
 
     const participantId = localStorage.getItem('pirateHuntDocId')
 
@@ -51,13 +56,26 @@ export default function TasksPage({ onLeaderboard }) {
 
             if (data && !error) {
                 setLettersCollected(data.letters_collected || [])
-                const nextQuest = (data.letters_collected?.length || 0) + 1
-                setExpandedQuestId(nextQuest)
+                const savedQuest = data.current_quest || 1
+                setCurrentQuest(savedQuest)
+                setExpandedQuestId(savedQuest >= 5 ? 5 : savedQuest)
 
-                if (data.current_phase === 1 && data.phase1_completed) {
+                // Simplified completion check
+                if (data.completion_duration !== null && data.completion_duration !== undefined) {
+                    setDuration(data.completion_duration)
+                    setPhaseCompleted(true)
                     setShowCompletion(true)
-                } else if (data.current_phase === 2 && data.phase2_completed) {
-                    setShowCompletion(true)
+                }
+
+                // Track start time
+                if (data.start_time) {
+                    setStartTime(new Date(data.start_time))
+                } else if (!data.completion_duration) {
+                    // Record start time if not already set and not finished
+                    const now = new Date()
+                    supabase.from('participants').update({ start_time: now.toISOString() }).eq('id', participantId).then(() => {
+                        setStartTime(now)
+                    })
                 }
             }
             if (!isLoaded) setIsLoaded(true)
@@ -79,13 +97,14 @@ export default function TasksPage({ onLeaderboard }) {
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'participants', filter: `id=eq.${participantId}` }, payload => {
                 const data = payload.new
                 setLettersCollected(data.letters_collected || [])
-                const nextQuest = (data.letters_collected?.length || 0) + 1
-                setExpandedQuestId(nextQuest)
+                const savedQuest = data.current_quest || 1
+                setCurrentQuest(savedQuest)
+                setExpandedQuestId(savedQuest >= 5 ? 5 : savedQuest)
 
-                if (data.current_phase === 1 && data.phase1_completed) {
+                if (data.completion_duration) {
+                    setDuration(data.completion_duration)
                     setShowCompletion(true)
-                } else if (data.current_phase === 2 && data.phase2_completed) {
-                    setShowCompletion(true)
+                    setPhaseCompleted(true)
                 }
             })
             .subscribe()
@@ -103,15 +122,16 @@ export default function TasksPage({ onLeaderboard }) {
                 const { data, error } = await supabase
                     .from('clues')
                     .select('*')
-                    .eq('phase', phase)
                     .order('quest_number', { ascending: true })
+                    .limit(5)
 
                 if (data && !error) {
                     // Map clues to the expected quest structure
                     const formattedQuests = data.map(c => ({
                         clue: c.clue_text,
                         location: c.location,
-                        id: c.quest_number
+                        id: c.quest_number,
+                        answer: c.answer // Added answer for validation
                     }))
                     setClues(formattedQuests)
                 } else {
@@ -123,21 +143,12 @@ export default function TasksPage({ onLeaderboard }) {
             }
         }
         fetchClues()
-    }, [phase])
+    }, []) // Logic simplified, fetch all 5 at once
 
     const progress = lettersCollected.length
-    const currentQuest = progress
     const targetLetters = targetWord?.split('') || []
 
-    // Automatically redirect to leaderboard after completion animation
-    useEffect(() => {
-        if (showCompletion && onLeaderboard) {
-            const timer = setTimeout(() => {
-                onLeaderboard(phase)
-            }, 6000)
-            return () => clearTimeout(timer)
-        }
-    }, [showCompletion, onLeaderboard, phase])
+    // Removed auto-redirect. Now handled by manual button in UI.
 
     const handleSumbitLetter = async (e) => {
         e.preventDefault()
@@ -157,35 +168,47 @@ export default function TasksPage({ onLeaderboard }) {
             return
         }
 
-        const correctLetter = targetLetters[progress].toUpperCase()
+        const currentClue = clues.find(c => c.id === currentQuest)
+        if (!currentClue) {
+            setErrorMsg('Quest data missing. Please refresh.')
+            setIsSubmitting(false)
+            return
+        }
 
-        if (inputValue.trim().toUpperCase() === correctLetter) {
-            const newLetters = [...lettersCollected, correctLetter]
-            const isPhaseCompleted = newLetters.length === targetLetters.length
+        const cleanedInput = inputValue.trim().toUpperCase()
+        const correctAnswer = currentClue.answer?.trim().toUpperCase()
+
+        console.log("User input:", cleanedInput)
+        console.log("Correct answer:", correctAnswer)
+
+        if (cleanedInput === correctAnswer) {
+            console.log("Quest unlocked")
+            const newLetters = [...lettersCollected, cleanedInput]
+            const nextQuestNum = currentQuest + 1
+            const isFinished = currentQuest >= 5
 
             setInputValue('')
 
             try {
                 const updateData = {
                     letters_collected: newLetters,
-                    current_quest: newLetters.length
+                    current_quest: currentQuest + 1
                 }
 
-                if (isPhaseCompleted) {
-                    if (phase === 1) {
-                        updateData.phase1_completed = true
-                        updateData.phase1_time = new Date().toISOString()
-                    } else if (phase === 2) {
-                        updateData.phase2_completed = true
-                        updateData.phase2_time = new Date().toISOString()
-                    }
+                if (isFinished) {
+                    const compTime = new Date()
+                    const startDT = startTime || new Date()
+                    const durSeconds = Math.floor((compTime - startDT) / 1000)
 
-                    // Automatic Winner Declaration if no one has won yet
+                    updateData.completion_time = compTime.toISOString()
+                    updateData.completion_duration = durSeconds
+                    setDuration(durSeconds)
+
                     if (!winnerDeclared) {
                         await supabase
                             .from('game_state')
                             .update({ winner_declared: true })
-                            .eq('id', 1) // Assuming there is only one game state row with ID 1
+                            .eq('id', 1)
                     }
                 }
 
@@ -195,14 +218,24 @@ export default function TasksPage({ onLeaderboard }) {
                     .eq('id', participantId)
 
                 if (updateError) throw updateError
+
+                // Immediately update local state
+                if (isFinished) {
+                    setShowCompletion(true)
+                    setPhaseCompleted(true)
+                }
+                setCurrentQuest(nextQuestNum)
+                setLettersCollected(newLetters)
+                setExpandedQuestId(nextQuestNum > 5 ? 5 : nextQuestNum)
+
                 setTimeout(() => setIsSubmitting(false), 500)
             } catch (err) {
-                console.error("Error updating doc", err)
+                console.error("Error updating participant progress:", err)
                 setErrorMsg('Network error. Try again.')
                 setTimeout(() => setIsSubmitting(false), 500)
             }
-
         } else {
+            console.log("Incorrect answer")
             setErrorMsg('Incorrect letter. Keep searching!')
             setTimeout(() => setErrorMsg(''), 3000)
             setTimeout(() => setIsSubmitting(false), 500)
@@ -246,21 +279,25 @@ export default function TasksPage({ onLeaderboard }) {
                             🏴‍☠️
                         </motion.div>
 
-                        <h1 className="text-3xl md:text-5xl font-serif text-pirate-gold mb-4 drop-shadow-lg tracking-widest uppercase">
-                            Treasure Word Discovered!
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-pirate-gold mb-4 drop-shadow-lg tracking-widest uppercase leading-tight px-4">
+                            Treasure Hunt Completed!
                         </h1>
 
+                        <div className="text-white text-xl md:text-2xl font-mono mb-6 bg-[#0a101d]/60 px-6 py-2 rounded-full border border-pirate-gold/30">
+                            Time Taken: {Math.floor(duration / 60)}m {(duration % 60).toString().padStart(2, '0')}s
+                        </div>
+
                         <motion.div
-                            className="bg-[#0a101d]/80 border-2 border-pirate-gold rounded-3xl p-8 md:p-12 my-8 backdrop-blur-md shadow-[0_0_50px_rgba(212,175,55,0.3)]"
+                            className="bg-[#0a101d]/80 border-2 border-pirate-gold rounded-3xl p-6 md:p-12 my-6 md:my-8 backdrop-blur-md shadow-[0_0_50px_rgba(212,175,55,0.3)] w-full max-w-sm md:max-w-none"
                             initial={{ y: 30, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.8 }}
                         >
-                            <div className="flex gap-4 md:gap-8 justify-center mb-6">
+                            <div className="flex flex-wrap gap-3 md:gap-8 justify-center mb-0 md:mb-6">
                                 {targetLetters.map((letter, i) => (
                                     <motion.span
                                         key={i}
-                                        className="text-5xl md:text-7xl font-black text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]"
+                                        className="text-4xl sm:text-5xl md:text-7xl font-black text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]"
                                         initial={{ opacity: 0, y: -20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: 1.5 + (i * 0.3), type: "spring" }}
@@ -272,13 +309,23 @@ export default function TasksPage({ onLeaderboard }) {
                         </motion.div>
 
                         <motion.p
-                            className="text-[#fdf5e6] text-xl md:text-2xl font-serif italic tracking-wide"
+                            className="text-[#fdf5e6] text-xl md:text-2xl font-serif italic tracking-wide mb-8"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 3.5, duration: 2 }}
                         >
                             "Every great industry begins with an <span className="text-pirate-gold font-bold not-italic">{targetWord}</span>."
                         </motion.p>
+
+                        <motion.button
+                            onClick={() => navigate('/leaderboard')}
+                            className="bg-pirate-gold text-[#0a101d] px-8 py-4 rounded-xl font-black font-serif uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(212,175,55,0.4)] hover:bg-[#ffcc33] hover:scale-105 transition-all"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 4.5 }}
+                        >
+                            Check Leaderboard
+                        </motion.button>
                     </motion.div>
                 ) : (
                     <motion.div
@@ -290,17 +337,17 @@ export default function TasksPage({ onLeaderboard }) {
                     >
                         <div className="text-center mb-6 md:mb-8">
                             <h1 className="text-[rgb(44,24,16)] text-3xl sm:text-4xl md:text-6xl md:text-pirate-gold drop-shadow-lg md:drop-shadow-[0_4px_10px_rgba(212,175,55,0.4)] tracking-[0.15em] uppercase font-black leading-tight">
-                                Phase {phase} Quests
+                                Treasure Hunt
                             </h1>
 
                             {/* Letters Progress Bar */}
-                            <div className="flex gap-2 sm:gap-4 md:gap-5 justify-center mt-6 md:mt-8 mb-4">
+                            <div className="flex flex-wrap gap-2 sm:gap-4 md:gap-5 justify-center mt-6 md:mt-8 mb-4 max-w-full overflow-hidden">
                                 {targetLetters.map((letter, i) => {
                                     const isRevealed = i < progress
                                     return (
                                         <div
                                             key={i}
-                                            className="w-10 h-14 sm:w-14 sm:h-18 md:w-16 md:h-20 border-b-4 border-pirate-gold flex items-center justify-center bg-[#0a101d]/40 backdrop-blur-sm rounded-t-lg shadow-inner"
+                                            className="w-10 h-14 sm:w-14 sm:h-18 md:w-16 md:h-20 border-b-4 border-pirate-gold flex items-center justify-center bg-[#0a101d]/40 backdrop-blur-sm rounded-t-lg shadow-inner flex-shrink-0"
                                         >
                                             {isRevealed ? (
                                                 <motion.span
@@ -339,11 +386,11 @@ export default function TasksPage({ onLeaderboard }) {
                                     </p>
                                 </div>
                             ) : (
-                                clues.slice(0, currentQuest + 1).map((clueData, index) => {
-                                    const id = index + 1
-                                    const isCompleted = index < progress
-                                    const isActive = index === progress
-                                    const isLocked = index > progress
+                                clues.slice(0, currentQuest).map((clueData, index) => {
+                                    const id = clueData.id
+                                    const isCompleted = id < currentQuest
+                                    const isActive = id === currentQuest
+                                    const isLocked = id > currentQuest
                                     const isExpanded = expandedQuestId === id
 
                                     return (
@@ -430,7 +477,7 @@ export default function TasksPage({ onLeaderboard }) {
                                                                         <motion.button
                                                                             type="submit"
                                                                             disabled={!inputValue || winnerDeclared || isSubmitting}
-                                                                            className="w-full mt-2 px-6 py-3 bg-pirate-gold text-[#2c1810] font-black font-serif uppercase tracking-widest rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#ffcc33] transition-colors shadow-md"
+                                                                            className="w-full mt-2 px-6 py-4 md:py-3 bg-pirate-gold text-[#2c1810] font-black font-serif uppercase tracking-widest rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#ffcc33] transition-colors shadow-md active:scale-95"
                                                                             whileTap={(!winnerDeclared && !isSubmitting) ? { scale: 0.95 } : {}}
                                                                         >
                                                                             {winnerDeclared ? 'Concluded' : isSubmitting ? 'Unlocking...' : 'Unlock'}

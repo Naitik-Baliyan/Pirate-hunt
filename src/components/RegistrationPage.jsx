@@ -149,7 +149,7 @@ export default function RegistrationPage({ onComplete }) {
               <span className="text-7xl drop-shadow-[0_0_20px_rgba(212,175,55,0.5)]">🏴‍☠️</span>
             </motion.div>
 
-            <h1 className="text-3xl sm:text-4xl md:text-6xl font-serif text-pirate-gold mb-4 md:mb-6 drop-shadow-lg tracking-tight leading-tight">
+            <h1 className="text-2xl sm:text-4xl md:text-6xl font-serif text-pirate-gold mb-4 md:mb-6 drop-shadow-lg tracking-tight leading-tight uppercase px-4">
               WELCOME EXPLORER!
             </h1>
 
@@ -198,7 +198,7 @@ export default function RegistrationPage({ onComplete }) {
             )}
 
             {/* Form Card: Parchment Aesthetic */}
-            <div className="w-full relative group overflow-hidden bg-[#fdf5e6]/20 border-2 border-white/30 rounded-3xl px-10 py-10 sm:px-12 sm:py-12 md:p-16 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border-t-white/40 border-l-white/40" style={{ willChange: 'backdrop-filter, transform' }}>
+            <div className="w-full relative group overflow-hidden bg-[#fdf5e6]/20 border-2 border-white/30 rounded-3xl px-6 py-8 sm:px-12 sm:py-12 md:p-16 backdrop-blur-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border-t-white/40 border-l-white/40" style={{ willChange: 'backdrop-filter, transform' }}>
               {/* Tactical Paper Texture / Grain */}
               <div className="absolute inset-0 opacity-[0.15] mix-blend-multiply pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
 
