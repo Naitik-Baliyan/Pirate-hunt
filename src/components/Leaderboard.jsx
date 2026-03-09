@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import mapBg from '../assets/registration-map.jpg' // Using map background for consistency
 
 export default function Leaderboard() {
+    const navigate = useNavigate()
     const [leaders, setLeaders] = useState([])
     const [loading, setLoading] = useState(true)
     const [winnerDeclared, setWinnerDeclared] = useState(false)
+    const [myParticipant, setMyParticipant] = useState(null)
+    const myId = localStorage.getItem('pirateHuntDocId')
 
     useEffect(() => {
         const fetchLeaderboard = async () => {
@@ -15,7 +19,8 @@ export default function Leaderboard() {
                 const { data, error } = await supabase
                     .from('participants')
                     .select('*')
-                    .not('completion_time', 'is', null)
+                    .not('completion_duration', 'is', null)
+                    .order('current_phase', { ascending: false })
                     .order('completion_duration', { ascending: true })
                     .limit(50)
 
@@ -36,13 +41,23 @@ export default function Leaderboard() {
             }
         }
 
+        const fetchMyParticipant = async () => {
+            if (!myId) return
+            const { data } = await supabase.from('participants').select('*').eq('participant_id', myId).single()
+            if (data) setMyParticipant(data)
+        }
+
         fetchLeaderboard()
         fetchGameState()
+        fetchMyParticipant()
 
         // Realtime Subscription
         const channel = supabase.channel('leaderboard_changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'participants' }, () => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'participants' }, (payload) => {
                 fetchLeaderboard()
+                if (payload.new && payload.new.participant_id === myId) {
+                    setMyParticipant(payload.new)
+                }
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'game_state' }, (payload) => {
                 if (payload.new) setWinnerDeclared(payload.new.phase3_winner_declared || payload.new.hunt_status === 'completed')
@@ -94,6 +109,40 @@ export default function Leaderboard() {
                             <h2 className="text-white text-2xl md:text-3xl font-black tracking-[0.3em] font-serif uppercase">
                                 HUNT CONCLUDED
                             </h2>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                    {myParticipant?.current_quest_index >= 6 && myParticipant?.current_phase !== 4 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-[#0a101d]/90 border-2 border-pirate-gold rounded-3xl p-6 text-center mb-8 md:mb-12 shadow-[0_0_40px_rgba(212,175,55,0.4)] backdrop-blur-md"
+                        >
+                            <h2 className="text-2xl md:text-3xl font-serif text-pirate-gold mb-2 tracking-widest uppercase font-black">
+                                Phase {myParticipant.current_phase} Completed!
+                            </h2>
+                            <p className="text-white/80 font-mono mb-6 max-w-2xl mx-auto">
+                                You fought bravely! But alas, another crew claimed the top spot for this phase. Review the ranks below before advancing!
+                            </p>
+                            <button
+                                onClick={async () => {
+                                    const nextPhase = myParticipant.current_phase + 1;
+                                    const isFinal = nextPhase > 3;
+                                    const updateData = {
+                                        current_phase: isFinal ? 4 : nextPhase,
+                                        current_quest_index: 1,
+                                        letters_collected: [],
+                                        completion_duration: null
+                                    };
+                                    await supabase.from('participants').update(updateData).eq('participant_id', myId);
+                                    navigate('/tasks');
+                                }}
+                                className="bg-pirate-gold text-[#0a101d] px-8 py-3 rounded-xl font-black font-serif uppercase tracking-[0.2em] shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-105 transition-transform"
+                            >
+                                {myParticipant.current_phase === 3 ? 'Conclude Journey' : `Proceed to Phase ${myParticipant.current_phase + 1}`}
+                            </button>
                         </motion.div>
                     )}
                 </AnimatePresence>

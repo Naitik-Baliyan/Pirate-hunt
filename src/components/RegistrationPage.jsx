@@ -65,6 +65,10 @@ export default function RegistrationPage({ onComplete }) {
       const newParticipantID = generateParticipantID()
       setParticipantID(newParticipantID)
 
+      // Fetch game state to check for late registration
+      const { data: gs } = await supabase.from('game_state').select('phase1_winner_declared').single()
+      const startingPhase = gs?.phase1_winner_declared ? 2 : 1
+
       // Save to Supabase
       const { data, error: supabaseError } = await supabase
         .from('participants')
@@ -77,7 +81,7 @@ export default function RegistrationPage({ onComplete }) {
             phone_number: formData.phoneNumber,
             email: formData.email,
             participant_id: newParticipantID,
-            current_phase: 1,
+            current_phase: startingPhase,
             current_quest_index: 1,
             letters_collected: [],
             phase1_time: null,
@@ -275,6 +279,8 @@ export default function RegistrationPage({ onComplete }) {
                     <option value="" disabled>Select Branch</option>
                     <option value="BTech">BTech</option>
                     <option value="MCA">MCA</option>
+                    <option value="MSc">MSc</option>
+                    <option value="MBA">MBA</option>
                   </select>
                 </div>
 

@@ -21,7 +21,7 @@ export default function TasksPage({ onLeaderboard }) {
     useEffect(() => {
         if (!participantId) {
             console.error("No participant ID found. Redirecting might be needed.")
-            setIsLoaded(true)
+            navigate('/')
             return
         }
 
@@ -43,7 +43,6 @@ export default function TasksPage({ onLeaderboard }) {
             }
         }
 
-        // 2. Initial Fetch for Participant
         const fetchParticipant = async () => {
             const { data, error } = await supabase
                 .from('participants')
@@ -53,7 +52,9 @@ export default function TasksPage({ onLeaderboard }) {
 
             if (data && !error) {
                 setParticipant(data)
-                setExpandedQuestId(data.current_quest_index >= 5 ? 5 : data.current_quest_index)
+                if (data.current_phase !== 4) {
+                    setExpandedQuestId(data.current_quest_index >= 5 ? 5 : data.current_quest_index)
+                }
 
                 // Track start time
                 if (!data.start_time && !data.completion_time) {
@@ -62,8 +63,11 @@ export default function TasksPage({ onLeaderboard }) {
                     data.start_time = now.toISOString()
                     setParticipant({ ...data })
                 }
+                setIsLoaded(true)
+            } else {
+                // Force a redirect to registration if not found or errored. 
+                navigate('/')
             }
-            setIsLoaded(true)
         }
 
         fetchGameControl()
@@ -94,14 +98,28 @@ export default function TasksPage({ onLeaderboard }) {
             })
             .subscribe()
 
+        // Loading State Timeout: if fetch breaks force-dismiss loader after 3 seconds
+        const loadTimeout = setTimeout(() => {
+            if (!isLoaded) {
+                console.warn("Forced Loader Release - check network tab.")
+                setIsLoaded(true)
+            }
+        }, 3000)
+
         return () => {
             supabase.removeChannel(gameStateChannel)
             supabase.removeChannel(participantChannel)
+            clearTimeout(loadTimeout)
         }
-    }, [participantId])
+    }, [participantId, isLoaded, navigate])
 
     useEffect(() => {
         if (!participant || participant.current_phase === 4) return
+
+        if (participant.current_quest_index >= 6) {
+            navigate('/leaderboard')
+            return
+        }
 
         const fetchClues = async () => {
             try {
@@ -116,7 +134,7 @@ export default function TasksPage({ onLeaderboard }) {
                     const formattedQuests = data.map(c => ({
                         clue: c.clue_text,
                         id: c.quest_number,
-                        answer: c.answer_code
+                        answer: c.answer // Corrected column mapping
                     }))
                     setClues(formattedQuests)
                 } else {
@@ -125,10 +143,13 @@ export default function TasksPage({ onLeaderboard }) {
             } catch (err) {
                 console.error("Error fetching clues: ", err)
                 setClues([])
+            } finally {
+                // Failsafe exit in case the data hook is empty
+                setIsLoaded(true)
             }
         }
         fetchClues()
-    }, [participant?.current_phase])
+    }, [participant?.current_phase, navigate])
 
     const currentQuest = participant?.current_quest_index || 1
     const lettersCollected = participant?.letters_collected || []
@@ -206,16 +227,9 @@ export default function TasksPage({ onLeaderboard }) {
                         })
 
                         if (isWinner) {
-                            // First to finish phase 1! Winner!
                             updateData.is_phase1_winner = true
-                            updateData.current_phase = 4 // Final Finished State
+                            updateData.current_phase = 4 // Terminal State
                             updateData.completion_time = now.toISOString()
-                        } else {
-                            // Already have a phase 1 winner, move this person to phase 2
-                            updateData.current_phase = 2
-                            updateData.current_quest_index = 1
-                            updateData.letters_collected = []
-                            delete updateData.completion_duration
                         }
                     } else if (participant.current_phase === 2) {
                         updateData.phase2_time = now.toISOString()
@@ -226,21 +240,13 @@ export default function TasksPage({ onLeaderboard }) {
                         })
 
                         if (isWinner) {
-                            // First to finish phase 2! Winner!
                             updateData.is_phase2_winner = true
-                            updateData.current_phase = 4 // Final Finished State
+                            updateData.current_phase = 4 // Terminal State
                             updateData.completion_time = now.toISOString()
-                        } else {
-                            // Already have a phase 2 winner, move this person to phase 3
-                            updateData.current_phase = 3
-                            updateData.current_quest_index = 1
-                            updateData.letters_collected = []
-                            delete updateData.completion_duration
                         }
                     } else if (participant.current_phase === 3) {
                         updateData.phase3_time = now.toISOString()
                         updateData.completion_time = now.toISOString()
-                        updateData.current_phase = 4 // Final Finished State
 
                         const { data: isWinner } = await supabase.rpc('declare_phase_winner', {
                             p_participant_id: participantId,
@@ -248,15 +254,10 @@ export default function TasksPage({ onLeaderboard }) {
                         })
 
                         if (isWinner) {
-                            // First to finish phase 3! Winner!
                             updateData.is_phase3_winner = true
+                            updateData.current_phase = 4 // Terminal State
                         }
                     }
-                }
-
-                const isTransitioningPhase = updateData.current_phase === 2 || updateData.current_phase === 3
-                if (isTransitioningPhase && !updateData.is_phase1_winner && !updateData.is_phase2_winner) {
-                    setTransitionMessage(`PHASE ${participant.current_phase} COMPLETED! Redirecting to Phase ${updateData.current_phase}...`)
                 }
 
                 const { error: updateError } = await supabase
@@ -264,10 +265,24 @@ export default function TasksPage({ onLeaderboard }) {
                     .update(updateData)
                     .eq('participant_id', participantId)
 
+                console.log("Current Index before update:", participant.current_quest_index)
+                console.log("Update Data sent to DB:", updateData)
+
                 if (updateError) throw updateError
 
-                if (isTransitioningPhase && !updateData.is_phase1_winner && !updateData.is_phase2_winner) {
-                    setTimeout(() => setTransitionMessage(''), 4500)
+                // Instantly update the local state so the next question renders immediately!
+                setParticipant(prev => ({
+                    ...prev,
+                    ...updateData
+                }))
+
+                // Automatically expand the newly unlocked question
+                if (updateData.current_phase !== 4) {
+                    setExpandedQuestId(Math.min(updateData.current_quest_index, 5))
+                }
+
+                if (isFinishedPhase && updateData.current_phase !== 4) {
+                    setTimeout(() => navigate('/leaderboard'), 1000)
                 }
 
             } catch (err) {
@@ -284,8 +299,15 @@ export default function TasksPage({ onLeaderboard }) {
     }
 
     if (!isLoaded) return (
-        <div className="w-full h-screen bg-[#0a1a2e] flex items-center justify-center">
-            <div className="text-3xl animate-pulse text-pirate-gold">Navigating the seas...</div>
+        <div className="w-full h-screen bg-[#0a1a2e] flex flex-col items-center justify-center">
+            <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                className="text-6xl mb-4 drop-shadow-[0_0_15px_rgba(212,175,55,0.6)]"
+            >
+                🧭
+            </motion.div>
+            <div className="text-2xl animate-pulse text-pirate-gold font-serif tracking-widest uppercase">Charting Course...</div>
         </div>
     )
 
