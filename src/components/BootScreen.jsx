@@ -1,18 +1,26 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import shipBg from '../assets/ship-bg.png' // I will copy the cinematic ship here
 import captainImg from '../assets/jack_sparrow2.png' // I will copy the captain here
 import mapTexture from '../assets/story-bg.png' // Use the map texture for the banner
 
 export default function BootScreen({ onBootComplete, isDataLoaded }) {
+  const startTimeRef = useRef(Date.now());
+
   useEffect(() => {
+    const MIN_BOOT_TIME = 7000; // 7 seconds minimum total time
+
     if (isDataLoaded) {
+      const elapsedTime = Date.now() - startTimeRef.current;
+      const remainingTime = Math.max(0, MIN_BOOT_TIME - elapsedTime);
+
       const timer = setTimeout(() => {
-        onBootComplete()
-      }, 2000) // Short delay once data is ready for smooth transition
-      return () => clearTimeout(timer)
+        onBootComplete();
+      }, remainingTime);
+
+      return () => clearTimeout(timer);
     }
-  }, [onBootComplete, isDataLoaded])
+  }, [onBootComplete, isDataLoaded]);
 
   return (
     <div className="w-full h-screen bg-[#0a1a2e] flex items-center justify-center overflow-hidden relative">
@@ -106,7 +114,7 @@ export default function BootScreen({ onBootComplete, isDataLoaded }) {
           className="relative w-full flex justify-center"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 2.8, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ delay: 1.8, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
         >
           {/* Glowing Aura behind the banner with flicker */}
           <motion.div
@@ -121,7 +129,7 @@ export default function BootScreen({ onBootComplete, isDataLoaded }) {
               className="relative overflow-visible bg-[#f4e4bc] border-y-[4px] md:border-y-[6px] border-[#8b6a1f] shadow-[0_30px_60px_rgba(0,0,0,0.8)]"
               initial={{ width: 0 }}
               animate={{ width: "fit-content" }}
-              transition={{ delay: 3, duration: 1.5, ease: "circOut" }}
+              transition={{ delay: 2, duration: 1.5, ease: "circOut" }}
             >
               {/* Map Texture Overlay */}
               <img
@@ -143,14 +151,14 @@ export default function BootScreen({ onBootComplete, isDataLoaded }) {
                 className="relative px-6 py-6 sm:px-16 md:px-48 lg:px-64 md:py-10 text-center min-w-[260px] sm:min-w-[500px] lg:min-w-[800px]"
                 initial={{ opacity: 0, filter: "blur(10px)" }}
                 animate={{ opacity: 1, filter: "blur(0px)" }}
-                transition={{ delay: 4, duration: 2 }}
+                transition={{ delay: 3, duration: 2 }}
               >
                 <div className="flex flex-col items-center justify-center gap-1 md:gap-2 w-full">
                   <motion.div
                     className="flex items-center gap-2 md:gap-3 mb-1"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 3.2, duration: 0.8 }}
+                    transition={{ delay: 2.2, duration: 0.8 }}
                   >
                     <div className="h-[1.5px] w-6 sm:w-12 bg-gradient-to-r from-transparent to-[#8b6a1f]" />
                     <span className="text-[10px] sm:text-xs md:text-sm font-serif tracking-[0.3em] sm:tracking-[0.6em] text-[#8b6a1f] uppercase font-black whitespace-nowrap">ENTERING THE VAULT</span>
@@ -164,7 +172,7 @@ export default function BootScreen({ onBootComplete, isDataLoaded }) {
                       <motion.div
                         className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -skew-x-12 pointer-events-none"
                         animate={{ x: ['-200%', '200%'] }}
-                        transition={{ delay: 4, duration: 3, repeat: Infinity, repeatDelay: 4 }}
+                        transition={{ delay: 3, duration: 3, repeat: Infinity, repeatDelay: 4 }}
                       />
                     </span>
                   </h1>
@@ -221,7 +229,7 @@ export default function BootScreen({ onBootComplete, isDataLoaded }) {
                 transition={{
                   duration: 3,
                   repeat: Infinity,
-                  delay: 4 + (i * 0.3),
+                  delay: 3 + (i * 0.3),
                   ease: "easeInOut"
                 }}
                 style={{
