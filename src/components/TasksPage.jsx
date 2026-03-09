@@ -38,7 +38,7 @@ export default function TasksPage({ onLeaderboard }) {
                     phase1_winner_declared: data.phase1_winner_declared || false,
                     phase2_winner_declared: data.phase2_winner_declared || false,
                     phase3_winner_declared: data.phase3_winner_declared || false,
-                    target_word: data.target_word || (data.current_phase === 1 ? 'I451S' : data.current_phase === 2 ? '7H3N4' : '8P1R4')
+                    target_word: data.current_word || (data.current_phase === 1 ? 'I451S' : data.current_phase === 2 ? '7H3N4' : '8P1R4')
                 })
             }
         }
@@ -111,7 +111,7 @@ export default function TasksPage({ onLeaderboard }) {
             supabase.removeChannel(participantChannel)
             clearTimeout(loadTimeout)
         }
-    }, [participantId, isLoaded, navigate])
+    }, [participantId, navigate])
 
     useEffect(() => {
         if (!participant || participant.current_phase === 4) return
@@ -120,6 +120,9 @@ export default function TasksPage({ onLeaderboard }) {
             navigate('/leaderboard')
             return
         }
+
+        // Clear stale clues immediately when phase changes
+        setClues([])
 
         const fetchClues = async () => {
             try {
@@ -130,21 +133,21 @@ export default function TasksPage({ onLeaderboard }) {
                     .order('quest_number', { ascending: true })
                     .limit(5)
 
-                if (data && !error) {
+                if (data && !error && data.length > 0) {
                     const formattedQuests = data.map(c => ({
                         clue: c.clue_text,
                         id: c.quest_number,
-                        answer: c.answer // Corrected column mapping
+                        answer: c.answer  // live DB column is 'answer'
                     }))
                     setClues(formattedQuests)
                 } else {
+                    console.error('No clues returned for phase', participant.current_phase, error)
                     setClues([])
                 }
             } catch (err) {
                 console.error("Error fetching clues: ", err)
                 setClues([])
             } finally {
-                // Failsafe exit in case the data hook is empty
                 setIsLoaded(true)
             }
         }
@@ -178,8 +181,8 @@ export default function TasksPage({ onLeaderboard }) {
         // Fetch latest game state to check if phase is closed or winner declared
         const { data: gs, error: gsError } = await supabase.from('game_state').select('*').single()
 
-        // Block submissions if hunt is completed
-        if (gs && gs.hunt_status === 'completed') {
+        // Block submissions if hunt is completed (uses winner_declared field which exists)
+        if (gs && gs.winner_declared === true && gs.phase3_winner_declared === true) {
             setErrorMsg('Hunt Concluded! The treasure has been claimed.')
             setTimeout(() => setErrorMsg(''), 5000)
             setIsSubmitting(false)
@@ -221,26 +224,28 @@ export default function TasksPage({ onLeaderboard }) {
                     if (participant.current_phase === 1) {
                         updateData.phase1_time = now.toISOString()
 
-                        const { data: isWinner } = await supabase.rpc('declare_phase_winner', {
+                        const { data: isWinner, error: rpcErr1 } = await supabase.rpc('declare_phase_winner', {
                             p_participant_id: participantId,
                             p_phase_number: 1
                         })
+                        if (rpcErr1) console.error('declare_phase_winner P1 error:', rpcErr1)
 
                         if (isWinner) {
-                            updateData.is_phase1_winner = true
+                            updateData.phase1_completed = true
                             updateData.current_phase = 4 // Terminal State
                             updateData.completion_time = now.toISOString()
                         }
                     } else if (participant.current_phase === 2) {
                         updateData.phase2_time = now.toISOString()
 
-                        const { data: isWinner } = await supabase.rpc('declare_phase_winner', {
+                        const { data: isWinner, error: rpcErr2 } = await supabase.rpc('declare_phase_winner', {
                             p_participant_id: participantId,
                             p_phase_number: 2
                         })
+                        if (rpcErr2) console.error('declare_phase_winner P2 error:', rpcErr2)
 
                         if (isWinner) {
-                            updateData.is_phase2_winner = true
+                            updateData.phase2_completed = true
                             updateData.current_phase = 4 // Terminal State
                             updateData.completion_time = now.toISOString()
                         }
@@ -248,13 +253,15 @@ export default function TasksPage({ onLeaderboard }) {
                         updateData.phase3_time = now.toISOString()
                         updateData.completion_time = now.toISOString()
 
-                        const { data: isWinner } = await supabase.rpc('declare_phase_winner', {
+                        const { data: isWinner, error: rpcErr3 } = await supabase.rpc('declare_phase_winner', {
                             p_participant_id: participantId,
                             p_phase_number: 3
                         })
+                        if (rpcErr3) console.error('declare_phase_winner P3 error:', rpcErr3)
 
                         if (isWinner) {
-                            updateData.is_phase3_winner = true
+                            updateData.phase3_winner = true
+                            updateData.phase3_completed = true
                             updateData.current_phase = 4 // Terminal State
                         }
                     }
@@ -376,22 +383,22 @@ export default function TasksPage({ onLeaderboard }) {
                         </motion.div>
 
                         <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-pirate-gold mb-4 drop-shadow-lg tracking-widest uppercase leading-tight px-4">
-                            {participant?.is_phase1_winner ? "Phase 1 Winner!" : participant?.is_phase2_winner ? "Phase 2 Winner!" : participant?.is_phase3_winner ? "Phase 3 Winner!" : "Treasure Hunt Completed!"}
+                            {participant?.phase1_completed ? "Phase 1 Winner!" : participant?.phase2_completed ? "Phase 2 Winner!" : participant?.phase3_winner ? "Phase 3 Winner!" : "Treasure Hunt Completed!"}
                         </h1>
 
-                        {participant?.is_phase1_winner && (
+                        {participant?.phase1_completed && (
                             <p className="text-white text-lg font-mono mb-4 text-center max-w-md">
                                 You are the triumphant winner of Phase 1! As the sovereign, you rest while your crew battles in subsequent phases.
                             </p>
                         )}
 
-                        {participant?.is_phase2_winner && (
+                        {participant?.phase2_completed && (
                             <p className="text-white text-lg font-mono mb-4 text-center max-w-md">
                                 You are the triumphant winner of Phase 2! As the sovereign, you rest while your crew battles in Phase 3.
                             </p>
                         )}
 
-                        {participant?.is_phase3_winner && (
+                        {participant?.phase3_winner && (
                             <p className="text-white text-lg font-mono mb-4 text-center max-w-md">
                                 All Hail! You have claimed the ultimate treasure and won Phase 3!
                             </p>

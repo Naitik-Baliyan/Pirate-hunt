@@ -54,23 +54,24 @@ export default function ARDownloadScreen({ onContinue }) {
                     </div>
 
                     <motion.a
-                        href="/scanner.apk" // Assuming the apk will be placed in public folder
-                        download
+                        href="https://drive.google.com/file/d/1a1We4bbeqN5ebh-Noc_d1HPIedBYOhzn/view?usp=drivesdk"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="w-full relative overflow-hidden bg-pirate-gold px-6 py-4 rounded-2xl font-black text-black uppercase tracking-[0.15em] shadow-[0_20px_40px_rgba(212,175,55,0.3)] transition-all flex items-center justify-center gap-3 group"
                         whileHover={{ scale: 1.02, backgroundColor: '#ffcc33', boxShadow: '0 25px 50px rgba(212,175,55,0.5)' }}
                         whileTap={{ scale: 0.98 }}
                     >
                         <span className="text-xl">🤖</span>
                         <span className="relative z-10 text-base sm:text-lg md:text-xl drop-shadow-sm font-black text-center">
-                            Download for Android
+                            Download AR Scanner
                         </span>
                         <motion.div
                             className="absolute inset-0 bg-white/30 -translate-x-full transition-transform duration-700 group-hover:translate-x-full"
                         />
                     </motion.a>
 
-                    <p className="text-pirate-gold/70 font-serif text-[10px] sm:text-xs italic tracking-[0.2em] uppercase text-center">
-                        Install and return to continue the adventure.
+                    <p className="text-[#fdf5e6]/75 font-serif text-[10px] sm:text-xs italic tracking-wide text-center leading-relaxed">
+                        After downloading, allow &lsquo;Install Unknown Apps&rsquo; on your Android device and install the AR Scanner.
                     </p>
 
                     <motion.button

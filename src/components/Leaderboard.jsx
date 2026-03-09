@@ -19,7 +19,7 @@ export default function Leaderboard() {
                 const { data, error } = await supabase
                     .from('participants')
                     .select('*')
-                    .not('completion_duration', 'is', null)
+                    .not('completion_time', 'is', null)
                     .order('current_phase', { ascending: false })
                     .order('completion_duration', { ascending: true })
                     .limit(50)
@@ -37,7 +37,7 @@ export default function Leaderboard() {
         const fetchGameState = async () => {
             const { data } = await supabase.from('game_state').select('*').single()
             if (data) {
-                setWinnerDeclared(data.phase3_winner_declared || data.hunt_status === 'completed')
+                setWinnerDeclared(data.phase3_winner_declared || data.winner_declared === true)
             }
         }
 
@@ -60,7 +60,7 @@ export default function Leaderboard() {
                 }
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'game_state' }, (payload) => {
-                if (payload.new) setWinnerDeclared(payload.new.phase3_winner_declared || payload.new.hunt_status === 'completed')
+                if (payload.new) setWinnerDeclared(payload.new.phase3_winner_declared || payload.new.winner_declared === true)
             })
             .subscribe()
 
@@ -133,8 +133,7 @@ export default function Leaderboard() {
                                     const updateData = {
                                         current_phase: isFinal ? 4 : nextPhase,
                                         current_quest_index: 1,
-                                        letters_collected: [],
-                                        completion_duration: null
+                                        letters_collected: []
                                     };
                                     await supabase.from('participants').update(updateData).eq('participant_id', myId);
                                     navigate('/tasks');
@@ -208,7 +207,7 @@ export default function Leaderboard() {
                                                 {leader.roll_number || '---'}
                                             </td>
                                             <td className="p-4 md:p-6 text-white/80 hidden lg:table-cell uppercase tracking-wider">
-                                                {leader.branch || '---'} {leader.is_phase1_winner ? '(P1 Winner)' : leader.is_phase2_winner ? '(P2 Winner)' : leader.is_phase3_winner ? '(P3 Winner)' : '(Finished)'}
+                                                {leader.branch || '---'} {leader.phase1_completed ? '(P1 Winner)' : leader.phase2_completed ? '(P2 Winner)' : leader.phase3_winner ? '(P3 Winner)' : '(Finished)'}
                                             </td>
                                             <td className="p-4 md:p-6 text-[#fdf5e6] text-right font-mono text-lg font-bold">
                                                 {formatTime(leader.completion_time)}
@@ -251,7 +250,7 @@ export default function Leaderboard() {
                                                         </span>
                                                         <span className="text-white/30 text-xs">|</span>
                                                         <span className="text-white/50 font-serif italic text-xs uppercase tracking-tighter">
-                                                            {leader.branch || 'Crew'} {leader.is_phase1_winner ? '(P1 Winner)' : leader.is_phase2_winner ? '(P2 Winner)' : leader.is_phase3_winner ? '(P3 Winner)' : ''}
+                                                            {leader.branch || 'Crew'} {leader.phase1_completed ? '(P1 Winner)' : leader.phase2_completed ? '(P2 Winner)' : leader.phase3_winner ? '(P3 Winner)' : ''}
                                                         </span>
                                                     </div>
                                                 </div>
