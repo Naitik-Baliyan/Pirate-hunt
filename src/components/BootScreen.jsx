@@ -4,16 +4,32 @@ import shipBg from '../assets/ship-bg.png' // I will copy the cinematic ship her
 import captainImg from '../assets/jack_sparrow2.png' // I will copy the captain here
 import mapTexture from '../assets/story-bg.png' // Use the map texture for the banner
 
-export default function BootScreen({ onBootComplete }) {
+export default function BootScreen({ onBootComplete, isDataLoaded }) {
   useEffect(() => {
-    const timer = setTimeout(() => {
-      onBootComplete()
-    }, 7000) // Increased to 7 seconds for a more cinematic build-up
-    return () => clearTimeout(timer)
-  }, [onBootComplete])
+    if (isDataLoaded) {
+      const timer = setTimeout(() => {
+        onBootComplete()
+      }, 2000) // Short delay once data is ready for smooth transition
+      return () => clearTimeout(timer)
+    }
+  }, [onBootComplete, isDataLoaded])
 
   return (
     <div className="w-full h-screen bg-[#0a1a2e] flex items-center justify-center overflow-hidden relative">
+      {!isDataLoaded && (
+        <div className="absolute bottom-10 left-0 w-full flex flex-col items-center z-[100] animate-pulse">
+          <div className="text-pirate-gold font-serif tracking-[0.3em] uppercase text-sm mb-2 opacity-80">
+            Charting Course...
+          </div>
+          <div className="w-48 h-[2px] bg-pirate-gold/20 relative overflow-hidden">
+            <motion.div
+              className="absolute inset-0 bg-pirate-gold"
+              animate={{ x: ['-100%', '100%'] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            />
+          </div>
+        </div>
+      )}
       {/* 1. Cinematic Background with Deep Parallax */}
       <motion.div
         className="absolute inset-0 z-0 animate-ocean"

@@ -4,14 +4,14 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import tasksBg from '../assets/registration-map.jpg'
 
-export default function TasksPage({ onLeaderboard }) {
-    const [gameState, setGameState] = useState({ current_phase: 1, phase1_winner_declared: false, phase2_winner_declared: false, phase3_winner_declared: false })
-    const [participant, setParticipant] = useState(null)
+export default function TasksPage({ onLeaderboard, initialParticipant, initialGameState }) {
+    const [gameState, setGameState] = useState(initialGameState || { current_phase: 1, phase1_winner_declared: false, phase2_winner_declared: false, phase3_winner_declared: false })
+    const [participant, setParticipant] = useState(initialParticipant || null)
     const [clues, setClues] = useState([])
     const [inputValue, setInputValue] = useState('')
     const [errorMsg, setErrorMsg] = useState('')
-    const [isLoaded, setIsLoaded] = useState(false)
-    const [expandedQuestId, setExpandedQuestId] = useState(1)
+    const [isLoaded, setIsLoaded] = useState(!!initialParticipant)
+    const [expandedQuestId, setExpandedQuestId] = useState(initialParticipant?.current_quest_index >= 5 ? 5 : (initialParticipant?.current_quest_index || 1))
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [transitionMessage, setTransitionMessage] = useState('')
     const [showInstructions, setShowInstructions] = useState(false)
@@ -21,70 +21,34 @@ export default function TasksPage({ onLeaderboard }) {
 
     useEffect(() => {
         if (!participantId) {
-            console.error("No participant ID found. Redirecting might be needed.")
             navigate('/')
             return
         }
 
-        // 1. Initial Fetch for Game Control
-        const fetchGameControl = async () => {
-            const { data, error } = await supabase
-                .from('game_state')
-                .select('*')
-                .single()
+        // If data wasn't passed in (e.g. direct refresh in development), fetch it
+        const fetchData = async () => {
+            if (!participant || !gameState.target_word) {
+                const { data: gs } = await supabase.from('game_state').select('*').single()
+                const { data: p } = await supabase.from('participants').select('*').eq('participant_id', participantId).single()
 
-            if (data && !error) {
-                setGameState({
-                    current_phase: data.current_phase || 1,
-                    phase1_winner_declared: data.phase1_winner_declared || false,
-                    phase2_winner_declared: data.phase2_winner_declared || false,
-                    phase3_winner_declared: data.phase3_winner_declared || false,
-                    target_word: data.current_word || (data.current_phase === 1 ? 'I451S' : data.current_phase === 2 ? '7H3N4' : '8P1R4')
-                })
+                if (gs) setGameState(gs)
+                if (p) {
+                    setParticipant(p)
+                    setExpandedQuestId(p.current_quest_index >= 5 ? 5 : p.current_quest_index)
+                    setIsLoaded(true)
+                } else {
+                    navigate('/')
+                }
             }
         }
 
-        const fetchParticipant = async () => {
-            const { data, error } = await supabase
-                .from('participants')
-                .select('*')
-                .eq('participant_id', participantId)
-                .single()
-
-            if (data && !error) {
-                setParticipant(data)
-                if (data.current_phase !== 4) {
-                    setExpandedQuestId(data.current_quest_index >= 5 ? 5 : data.current_quest_index)
-                }
-
-                // Track start time
-                if (!data.start_time && !data.completion_time) {
-                    const now = new Date()
-                    await supabase.from('participants').update({ start_time: now.toISOString() }).eq('participant_id', participantId)
-                    data.start_time = now.toISOString()
-                    setParticipant({ ...data })
-                }
-                setIsLoaded(true)
-            } else {
-                // Force a redirect to registration if not found or errored. 
-                navigate('/')
-            }
-        }
-
-        fetchGameControl()
-        fetchParticipant()
+        fetchData()
 
         // 3. Real-time Subscription for Game State
         const gameStateChannel = supabase.channel('game_state_changes')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_state' }, payload => {
                 const data = payload.new
-                setGameState({
-                    current_phase: data.current_phase || 1,
-                    phase1_winner_declared: data.phase1_winner_declared || false,
-                    phase2_winner_declared: data.phase2_winner_declared || false,
-                    phase3_winner_declared: data.phase3_winner_declared || false,
-                    target_word: data.target_word
-                })
+                setGameState(data)
             })
             .subscribe()
 
@@ -99,18 +63,9 @@ export default function TasksPage({ onLeaderboard }) {
             })
             .subscribe()
 
-        // Loading State Timeout: if fetch breaks force-dismiss loader after 3 seconds
-        const loadTimeout = setTimeout(() => {
-            if (!isLoaded) {
-                console.warn("Forced Loader Release - check network tab.")
-                setIsLoaded(true)
-            }
-        }, 3000)
-
         return () => {
             supabase.removeChannel(gameStateChannel)
             supabase.removeChannel(participantChannel)
-            clearTimeout(loadTimeout)
         }
     }, [participantId, navigate])
 
@@ -121,9 +76,6 @@ export default function TasksPage({ onLeaderboard }) {
             navigate('/leaderboard')
             return
         }
-
-        // Clear stale clues immediately when phase changes
-        setClues([])
 
         const fetchClues = async () => {
             try {
@@ -138,11 +90,10 @@ export default function TasksPage({ onLeaderboard }) {
                     const formattedQuests = data.map(c => ({
                         clue: c.clue_text,
                         id: c.quest_number,
-                        answer: c.answer  // live DB column is 'answer'
+                        answer: c.answer
                     }))
                     setClues(formattedQuests)
                 } else {
-                    console.error('No clues returned for phase', participant.current_phase, error)
                     setClues([])
                 }
             } catch (err) {
@@ -159,12 +110,17 @@ export default function TasksPage({ onLeaderboard }) {
     const lettersCollected = participant?.letters_collected || []
     const progress = lettersCollected.length
 
-    // Derived target string based on user phase
-    // Derived target string based on user phase or game state
-    const targetWord = participant?.current_phase === 1 ? (gameState.current_phase === 1 ? gameState.target_word || 'I451S' : 'I451S') :
-        participant?.current_phase === 2 ? (gameState.current_phase === 2 ? gameState.target_word || '7H3N4' : '7H3N4') :
-            participant?.current_phase === 3 ? (gameState.current_phase === 3 ? gameState.target_word || '8P1R4' : '8P1R4') :
-                'I451S'
+    // Derived target string based on user phase - following prompt requirements
+    const getTargetWord = () => {
+        if (!participant) return 'I451S'
+        switch (participant.current_phase) {
+            case 1: return 'I451S'
+            case 2: return '7H3N4'
+            case 3: return '8P1R4'
+            default: return 'I451S'
+        }
+    }
+    const targetWord = getTargetWord()
     const targetLetters = targetWord.split('')
 
     const handleSumbitLetter = async (e) => {
@@ -597,7 +553,7 @@ export default function TasksPage({ onLeaderboard }) {
                                     </p>
                                 </div>
                             ) : (
-                                clues.slice(0, currentQuest + 1).map((clueData, index) => {
+                                clues.slice(0, currentQuest).map((clueData, index) => {
                                     const id = clueData.id
                                     const isCompleted = id < currentQuest
                                     const isActive = id === currentQuest

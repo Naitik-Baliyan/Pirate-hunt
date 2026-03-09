@@ -1,6 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { supabase } from './supabaseClient'
 import BootScreen from './components/BootScreen'
 import BackgroundMusic from './components/BackgroundMusic'
 import ARDownloadScreen from './components/ARDownloadScreen'
@@ -14,10 +15,60 @@ const Leaderboard = lazy(() => import('./pages/Leaderboard'))
 const MapPage = lazy(() => import('./pages/MapPage'))
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('boot') // boot, story, registration, ar-download, hunt, rules, tasks, leaderboard
+  const [currentPage, setCurrentPage] = useState('boot')
+  const [session, setSession] = useState({
+    isLoaded: false,
+    participant: null,
+    gameState: null
+  })
+
+  useEffect(() => {
+    // Emergency Reset via URL: ?reset=true
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('reset') === 'true') {
+      localStorage.removeItem('pirateHuntDocId')
+      window.location.href = window.location.origin
+      return
+    }
+
+    const initializeApp = async () => {
+      try {
+        // Fetch Game State
+        const { data: gs } = await supabase.from('game_state').select('*').single()
+
+        // Check for session
+        const savedId = localStorage.getItem('pirateHuntDocId')
+        let participantData = null
+
+        if (savedId) {
+          const { data: p } = await supabase
+            .from('participants')
+            .select('*')
+            .eq('participant_id', savedId)
+            .single()
+          participantData = p
+        }
+
+        setSession({
+          isLoaded: true,
+          participant: participantData,
+          gameState: gs
+        })
+      } catch (err) {
+        console.error("Initialization failed:", err)
+        setSession(prev => ({ ...prev, isLoaded: true }))
+      }
+    }
+
+    initializeApp()
+  }, [])
 
   const handleBootComplete = () => {
-    setCurrentPage('story')
+    if (session.participant) {
+      setCurrentPage('tasks')
+    } else {
+      setCurrentPage('story')
+    }
   }
 
   const handleStartHunt = () => {
@@ -44,16 +95,9 @@ export default function App() {
     setCurrentPage('leaderboard')
   }
 
-  useEffect(() => {
-    const savedId = localStorage.getItem('pirateHuntDocId')
-    if (savedId) {
-      setCurrentPage('tasks')
-    }
-  }, [])
-
   return (
     <Router>
-      <div className="w-full h-screen bg-[#0a101d] overflow-hidden relative">
+      <div className="w-full h-screen bg-[#0a101d] overflow-hidden relative text-white">
         {/* Cinematic Film Effects */}
         <div className="film-grain" />
         <div className="filmic-grading fixed inset-0 pointer-events-none z-[110]" />
@@ -89,7 +133,10 @@ export default function App() {
                   transition={{ duration: 0.8 }}
                   className="w-full h-screen"
                 >
-                  <BootScreen onBootComplete={handleBootComplete} />
+                  <BootScreen
+                    onBootComplete={handleBootComplete}
+                    isDataLoaded={session.isLoaded}
+                  />
                 </motion.div>
               )}
 
@@ -176,7 +223,11 @@ export default function App() {
                     transition={{ duration: 0.8 }}
                     className="w-full h-screen"
                   >
-                    <TasksPage onLeaderboard={handleLeaderboard} />
+                    <TasksPage
+                      onLeaderboard={handleLeaderboard}
+                      initialParticipant={session.participant}
+                      initialGameState={session.gameState}
+                    />
                   </motion.div>
                 </Suspense>
               )}
