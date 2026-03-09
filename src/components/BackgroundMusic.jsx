@@ -35,7 +35,7 @@ export default function BackgroundMusic() {
     }, [isPlaying])
 
     return (
-        <div className="fixed top-6 right-6 z-[1000] flex items-center gap-4">
+        <div className="fixed bottom-6 right-6 z-[1000] flex items-center gap-4">
             {/* Hidden HTML5 Audio Element */}
             <audio
                 ref={audioRef}

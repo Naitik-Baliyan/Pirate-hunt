@@ -14,6 +14,7 @@ export default function TasksPage({ onLeaderboard }) {
     const [expandedQuestId, setExpandedQuestId] = useState(1)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [transitionMessage, setTransitionMessage] = useState('')
+    const [showInstructions, setShowInstructions] = useState(false)
     const navigate = useNavigate()
 
     const participantId = localStorage.getItem('pirateHuntDocId')
@@ -320,12 +321,99 @@ export default function TasksPage({ onLeaderboard }) {
 
     return (
         <div className="w-full min-h-screen relative flex flex-col items-center py-8 px-4 md:py-12 md:px-8 bg-[#0a1a2e] overflow-y-auto no-scrollbar">
+            {/* Three-dot Menu Button */}
+            <div className="fixed top-4 right-4 z-[60]">
+                <button
+                    onClick={() => setShowInstructions(true)}
+                    className="w-12 h-12 flex items-center justify-center rounded-full bg-[#0a101d]/70 border-2 border-pirate-gold/40 text-pirate-gold text-3xl hover:bg-pirate-gold/20 transition-all shadow-lg active:scale-90 touch-manipulation"
+                >
+                    ⋮
+                </button>
+            </div>
+
+            {/* Instructions Modal */}
+            <AnimatePresence>
+                {showInstructions && (
+                    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowInstructions(false)}
+                            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="relative w-full max-w-lg bg-[#0a1a2e] border-2 border-pirate-gold rounded-3xl p-6 md:p-8 shadow-[0_0_50px_rgba(212,175,55,0.3)] z-10"
+                        >
+                            <button
+                                onClick={() => setShowInstructions(false)}
+                                className="absolute top-4 right-4 text-pirate-gold/50 hover:text-pirate-gold text-2xl transition-colors"
+                            >
+                                ✕
+                            </button>
+
+                            <div className="flex flex-col items-center text-center">
+                                <span className="text-5xl mb-4 drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]">📜</span>
+                                <h2 className="text-2xl md:text-3xl font-serif font-black text-pirate-gold uppercase tracking-widest mb-6">
+                                    Captain's Orders
+                                </h2>
+
+                                <div className="space-y-4 text-left w-full mb-8 font-serif">
+                                    <div className="flex gap-4">
+                                        <span className="text-pirate-gold">1.</span>
+                                        <p className="text-[#fdf5e6]/80 text-sm md:text-base leading-relaxed">
+                                            Solve the riddles to find the hidden locations across the island.
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <span className="text-pirate-gold">2.</span>
+                                        <p className="text-[#fdf5e6]/80 text-sm md:text-base leading-relaxed">
+                                            Each location holds a single secret letter. Collect all letters to form the target word.
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <span className="text-pirate-gold">3.</span>
+                                        <p className="text-[#fdf5e6]/80 text-sm md:text-base leading-relaxed">
+                                            Enter the found letter in the quest box to unlock the next leg of your journey.
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-4">
+                                        <span className="text-pirate-gold">4.</span>
+                                        <p className="text-[#fdf5e6]/80 text-sm md:text-base leading-relaxed">
+                                            Be the first to finish and claim the ultimate sovereign's prize!
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col w-full gap-4">
+                                    <button
+                                        onClick={() => navigate('/map')}
+                                        className="w-full bg-pirate-gold text-[#0a101d] font-black font-serif uppercase tracking-widest py-4 rounded-xl hover:bg-[#ffcc33] transition-colors shadow-lg active:scale-95 flex items-center justify-center gap-3"
+                                    >
+                                        <span>🗺️</span> View Map
+                                    </button>
+                                    <button
+                                        onClick={() => setShowInstructions(false)}
+                                        className="w-full bg-white/5 text-[#fdf5e6]/60 font-serif uppercase tracking-widest py-3 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             {/* Background Image Layer */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <img
                     src={tasksBg}
                     alt="Parchment Background"
-                    className="w-full h-full object-cover md:object-cover sm:object-fill opacity-90 sepia-[0.3] brightness-75 contrast-125 saturate-[0.8]"
+                    className="w-full h-full object-cover opacity-90 sepia-[0.2] brightness-75 contrast-125 saturate-[0.8]"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a101d] via-transparent to-[#0a101d]/60" />
                 <div className="absolute inset-0 shadow-[inset_0_0_150px_rgba(10,26,46,0.9)]" />
@@ -470,14 +558,14 @@ export default function TasksPage({ onLeaderboard }) {
                                     return (
                                         <div
                                             key={i}
-                                            className="w-10 h-14 sm:w-14 sm:h-18 md:w-16 md:h-20 border-b-4 border-pirate-gold flex items-center justify-center bg-[#0a101d]/40 backdrop-blur-sm rounded-t-lg shadow-inner flex-shrink-0"
+                                            className="w-10 h-14 sm:w-12 sm:h-16 md:w-16 md:h-20 border-b-4 border-pirate-gold flex items-center justify-center bg-[#0a101d]/40 backdrop-blur-sm rounded-t-lg shadow-inner flex-shrink-0"
                                         >
                                             {isRevealed ? (
                                                 <motion.span
                                                     className="text-2xl sm:text-3xl md:text-4xl font-black text-pirate-gold drop-shadow-[0_0_10px_rgba(212,175,55,0.8)]"
                                                     initial={{ scale: 0, opacity: 0 }}
                                                     animate={{ scale: 1, opacity: 1 }}
-                                                    transition={{ type: "spring" }}
+                                                    transition={{ type: "spring", damping: 12 }}
                                                 >
                                                     {lettersCollected[i]}
                                                 </motion.span>

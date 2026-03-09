@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../supabaseClient'
 import mapBg from '../assets/registration-map.jpg'
@@ -54,6 +54,29 @@ export default function RegistrationPage({ onComplete }) {
         return
       }
 
+      // Check if participant already exists by email
+      const { data: existingParticipant, error: checkError } = await supabase
+        .from('participants')
+        .select('*')
+        .eq('email', formData.email.trim())
+        .maybeSingle()
+
+      if (checkError) throw checkError
+
+      if (existingParticipant) {
+        // Returning User Found
+        localStorage.setItem('pirateHuntDocId', existingParticipant.participant_id)
+        setParticipantID(existingParticipant.participant_id)
+        setSuccess(true)
+
+        setTimeout(() => {
+          if (onComplete) {
+            onComplete(existingParticipant.participant_id)
+          }
+        }, 3000)
+        return
+      }
+
       // Phone validation (simple)
       if (formData.phoneNumber.length < 10) {
         setError('Please enter a valid phone number.')
@@ -61,11 +84,11 @@ export default function RegistrationPage({ onComplete }) {
         return
       }
 
-      // Generate participant ID (for display purposes)
+      // Generate participant ID
       const newParticipantID = generateParticipantID()
       setParticipantID(newParticipantID)
 
-      // Fetch game state to check for late registration
+      // Fetch game state to check for starting phase
       const { data: gs } = await supabase.from('game_state').select('phase1_winner_declared').single()
       const startingPhase = gs?.phase1_winner_declared ? 2 : 1
 
@@ -79,7 +102,7 @@ export default function RegistrationPage({ onComplete }) {
             branch: formData.branch,
             year: formData.year,
             phone_number: formData.phoneNumber,
-            email: formData.email,
+            email: formData.email.trim(),
             participant_id: newParticipantID,
             current_phase: startingPhase,
             current_quest_index: 1,
@@ -91,33 +114,25 @@ export default function RegistrationPage({ onComplete }) {
         ])
         .select()
 
-      if (supabaseError) throw supabaseError
+      if (supabaseError) {
+        if (supabaseError.code === '23505') { // Handle race condition/duplicate unique constraint
+          setError('This email is already registered. Try logging in or contact support.')
+        } else {
+          throw supabaseError
+        }
+        return
+      }
 
-      // Save doc.id to localStorage so TasksPage can act over it
-      // Supabase returns an array for insert.select()
       const participant = data[0]
       localStorage.setItem('pirateHuntDocId', participant.participant_id)
 
-      // Show success
       setSuccess(true)
-      setFormData({
-        fullName: '',
-        rollNumber: '',
-        branch: '',
-        year: '1',
-        phoneNumber: '',
-        email: ''
-      })
 
-      // Reset after 8 seconds to give more time to see ID, then proceed if onComplete is provided
       setTimeout(() => {
         if (onComplete) {
           onComplete(newParticipantID)
-        } else {
-          setSuccess(false)
-          setParticipantID('')
         }
-      }, 7000)
+      }, 5000)
 
     } catch (err) {
       console.error('Registration error:', err)

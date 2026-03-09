@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
@@ -190,29 +190,13 @@ export default function Leaderboard() {
                                     </tr>
                                 ) : (
                                     leaders.map((leader, index) => (
-                                        <motion.tr
+                                        <LeaderboardRow
                                             key={leader.id}
-                                            className="border-b border-pirate-gold/10 hover:bg-pirate-gold/10 transition-colors"
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: index * 0.1 }}
-                                        >
-                                            <td className="p-4 md:p-6 text-center text-3xl font-black drop-shadow-md pb-4">
-                                                {getRankMedal(index)}
-                                            </td>
-                                            <td className="p-4 md:p-6 text-[#fdf5e6] text-xl font-bold uppercase tracking-wide">
-                                                {leader.name}
-                                            </td>
-                                            <td className="p-4 md:p-6 text-pirate-gold/80 font-bold font-mono text-lg">
-                                                {leader.roll_number || '---'}
-                                            </td>
-                                            <td className="p-4 md:p-6 text-white/80 hidden lg:table-cell uppercase tracking-wider">
-                                                {leader.branch || '---'} {leader.phase1_completed ? '(P1 Winner)' : leader.phase2_completed ? '(P2 Winner)' : leader.phase3_winner ? '(P3 Winner)' : '(Finished)'}
-                                            </td>
-                                            <td className="p-4 md:p-6 text-[#fdf5e6] text-right font-mono text-lg font-bold">
-                                                {formatTime(leader.completion_time)}
-                                            </td>
-                                        </motion.tr>
+                                            leader={leader}
+                                            index={index}
+                                            formatTime={formatTime}
+                                            getRankMedal={getRankMedal}
+                                        />
                                     ))
                                 )}
                             </tbody>
@@ -290,3 +274,27 @@ export default function Leaderboard() {
         </div>
     )
 }
+const LeaderboardRow = memo(({ leader, index, formatTime, getRankMedal }) => (
+    <motion.tr
+        className="border-b border-pirate-gold/10 hover:bg-pirate-gold/10 transition-colors"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: index * 0.05 }}
+    >
+        <td className="p-4 md:p-5 text-center text-2xl md:text-3xl font-black drop-shadow-md pb-4">
+            {getRankMedal(index)}
+        </td>
+        <td className="p-4 md:p-5 text-[#fdf5e6] text-lg md:text-xl font-bold uppercase tracking-wide">
+            {leader.name}
+        </td>
+        <td className="p-4 md:p-5 text-pirate-gold/80 font-bold font-mono text-base md:text-lg">
+            {leader.roll_number || '---'}
+        </td>
+        <td className="p-4 md:p-5 text-white/80 hidden lg:table-cell uppercase tracking-wider text-sm">
+            {leader.branch || '---'} {leader.phase1_completed ? '(P1 Winner)' : leader.phase2_completed ? '(P2 Winner)' : leader.phase3_winner ? '(P3 Winner)' : '(Finished)'}
+        </td>
+        <td className="p-4 md:p-5 text-[#fdf5e6] text-right font-mono text-base md:text-lg font-bold">
+            {formatTime(leader.completion_time)}
+        </td>
+    </motion.tr>
+))

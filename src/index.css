@@ -12,8 +12,6 @@
 }
 
 * {
-
-
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -34,6 +32,7 @@ body {
   font-family: 'Cinzel', serif;
   overflow-x: hidden;
   position: relative;
+  touch-action: manipulation;
 }
 
 /* Global Cinematic Overlay (Grain/Grainy) - Optimized for static rendering */
@@ -46,12 +45,10 @@ body::after {
   height: 100%;
   pointer-events: none;
   z-index: 100;
-  /* Reduced numOctaves and simplified SVG for mobile */
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   opacity: 0.04;
   mix-blend-mode: overlay;
   transform: translateZ(0);
-  /* Force GPU layer */
 }
 
 /* Global Film Grain */
@@ -61,7 +58,6 @@ body::after {
   z-index: 1000;
   pointer-events: none;
   opacity: 0.05;
-  /* Reduced numOctaves from 3 to 1 for mobile performance */
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
@@ -83,7 +79,6 @@ body::after {
   filter: blur(2px);
   animation: drift linear infinite;
   will-change: transform, opacity;
-  /* Hint for GPU acceleration */
 }
 
 @keyframes drift {
@@ -120,7 +115,6 @@ body::after {
 .filmic-grading {
   filter: contrast(105%) brightness(98%) sepia(15%) saturate(110%);
   will-change: transform;
-  /* Hint for layer promotion */
 }
 
 /* New: CSS-based Ocean Sway for better performance than JS-driven framer motion */
@@ -142,7 +136,7 @@ body::after {
   animation: ocean-sway 15s ease-in-out infinite;
 }
 
-/* Custom Scrollbar: Bronze & Wood */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
 }
@@ -172,7 +166,8 @@ body::after {
 /* Global Mobile Stability Fixes */
 :root {
   --safe-padding: 16px;
-  --touch-target: 44px;
+  --touch-target: 48px;
+  /* Improved touch target size */
 }
 
 html,
@@ -181,67 +176,23 @@ body {
   overflow-x: hidden;
   position: relative;
   touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
 }
 
-/* Typography Fluid Scaling - Refined for 320px-480px width */
+/* Typography Fluid Scaling */
 h1 {
-  font-size: clamp(1.75rem, 10vw, 4rem);
+  font-size: clamp(2rem, 8vw, 4rem);
   line-height: 1.1;
 }
 
 h2 {
-  font-size: clamp(1.4rem, 7vw, 2.5rem);
+  font-size: clamp(1.5rem, 6vw, 2.5rem);
   line-height: 1.2;
 }
 
-h3 {
-  font-size: clamp(1.2rem, 5vw, 1.8rem);
-}
-
 p {
-  font-size: clamp(0.9rem, 3.5vw, 1.1rem);
+  font-size: clamp(1rem, 3vw, 1.25rem);
   line-height: 1.6;
-}
-
-/* Safe Container utility */
-.safe-container {
-  width: 100%;
-  max-width: 100%;
-  padding-left: max(var(--safe-padding), env(safe-area-inset-left));
-  padding-right: max(var(--safe-padding), env(safe-area-inset-right));
-}
-
-/* Ensure all interactive elements have safe touch sizes */
-button,
-a,
-input,
-select,
-[role="button"] {
-  min-height: var(--touch-target);
-  min-width: var(--touch-target);
-}
-
-/* Global Utility: Prevent Text Overflow */
-.text-wrap-balance {
-  text-wrap: balance;
-}
-
-.break-word {
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-}
-
-/* Responsive Hide Utilities */
-@media (max-width: 480px) {
-  .hidden-mobile {
-    display: none !important;
-  }
-}
-
-@media (min-width: 481px) {
-  .only-mobile {
-    display: none !important;
-  }
 }
 
 /* Button styling */
@@ -250,26 +201,53 @@ select,
   color: #0a0e27;
   font-weight: bold;
   padding: 12px 32px;
-  border: 2px solid #8b6a1f;
-  border-radius: 4px;
+  border: 4px solid #8b6a1f;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: Georgia, serif;
-  font-size: 16px;
+  font-size: 18px;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 .btn-pirate:hover {
   background: linear-gradient(135deg, #e8c547, #d4af37);
-  box-shadow: 0 0 25px rgba(212, 175, 55, 0.6);
-  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
+  transform: translateY(-4px) scale(1.02);
 }
 
 .btn-pirate:active {
-  transform: translateY(-1px);
+  transform: translateY(-1px) scale(0.98);
+}
+
+/* Global Touch Fixes */
+button,
+a,
+input,
+select {
+  touch-action: manipulation;
+  min-height: 48px;
+}
+
+/* Smooth Scrolling */
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* No-Scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import BootScreen from './components/BootScreen'
@@ -11,6 +11,7 @@ const HuntMap = lazy(() => import('./components/HuntMap'))
 const RulesPage = lazy(() => import('./components/RulesPage'))
 const TasksPage = lazy(() => import('./components/TasksPage'))
 const Leaderboard = lazy(() => import('./pages/Leaderboard'))
+const MapPage = lazy(() => import('./pages/MapPage'))
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('boot') // boot, story, registration, ar-download, hunt, rules, tasks, leaderboard
@@ -42,6 +43,13 @@ export default function App() {
   const handleLeaderboard = () => {
     setCurrentPage('leaderboard')
   }
+
+  useEffect(() => {
+    const savedId = localStorage.getItem('pirateHuntDocId')
+    if (savedId) {
+      setCurrentPage('tasks')
+    }
+  }, [])
 
   return (
     <Router>
@@ -186,6 +194,21 @@ export default function App() {
                 className="w-full h-screen overflow-y-auto"
               >
                 <Leaderboard />
+              </motion.div>
+            </Suspense>
+          } />
+
+          <Route path="/map" element={
+            <Suspense fallback={<div className="w-full h-screen bg-[#0a101d]" />}>
+              <motion.div
+                key="map-page"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8 }}
+                className="w-full h-screen"
+              >
+                <MapPage />
               </motion.div>
             </Suspense>
           } />
