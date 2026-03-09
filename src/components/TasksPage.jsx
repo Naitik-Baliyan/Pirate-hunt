@@ -13,6 +13,7 @@ export default function TasksPage({ onLeaderboard }) {
     const [isLoaded, setIsLoaded] = useState(false)
     const [expandedQuestId, setExpandedQuestId] = useState(1)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [transitionMessage, setTransitionMessage] = useState('')
     const navigate = useNavigate()
 
     const participantId = localStorage.getItem('pirateHuntDocId')
@@ -156,8 +157,8 @@ export default function TasksPage({ onLeaderboard }) {
         // Fetch latest game state to check if phase is closed or winner declared
         const { data: gs, error: gsError } = await supabase.from('game_state').select('*').single()
 
-        // Block submissions for Phase 3 if a winner is already declared
-        if (participant.current_phase === 3 && gs && gs.phase3_winner_declared) {
+        // Block submissions if hunt is completed
+        if (gs && gs.hunt_status === 'completed') {
             setErrorMsg('Hunt Concluded! The treasure has been claimed.')
             setTimeout(() => setErrorMsg(''), 5000)
             setIsSubmitting(false)
@@ -190,66 +191,72 @@ export default function TasksPage({ onLeaderboard }) {
                 if (isFinishedPhase) {
                     const now = new Date()
 
-                    // Fetch latest game state to avoid race conditions
-                    const { data: gs } = await supabase.from('game_state').select('*').single()
+                    // Ensure duration is accurately derived for all phase winners and Phase 3 finishers
+                    if (participant.start_time) {
+                        const start = new Date(participant.start_time)
+                        updateData.completion_duration = Math.floor((now - start) / 1000)
+                    }
 
                     if (participant.current_phase === 1) {
                         updateData.phase1_time = now.toISOString()
-                        if (gs && !gs.phase1_winner_declared) {
+
+                        const { data: isWinner } = await supabase.rpc('declare_phase_winner', {
+                            p_participant_id: participantId,
+                            p_phase_number: 1
+                        })
+
+                        if (isWinner) {
                             // First to finish phase 1! Winner!
-                            await supabase.from('game_state').update({ phase1_winner_declared: true }).eq('id', 1)
                             updateData.is_phase1_winner = true
                             updateData.current_phase = 4 // Final Finished State
                             updateData.completion_time = now.toISOString()
-
-                            // Calculate duration from start_time
-                            if (participant.start_time) {
-                                const start = new Date(participant.start_time)
-                                updateData.completion_duration = Math.floor((now - start) / 1000)
-                            }
                         } else {
                             // Already have a phase 1 winner, move this person to phase 2
                             updateData.current_phase = 2
                             updateData.current_quest_index = 1
                             updateData.letters_collected = []
+                            delete updateData.completion_duration
                         }
                     } else if (participant.current_phase === 2) {
                         updateData.phase2_time = now.toISOString()
-                        if (gs && !gs.phase2_winner_declared) {
+
+                        const { data: isWinner } = await supabase.rpc('declare_phase_winner', {
+                            p_participant_id: participantId,
+                            p_phase_number: 2
+                        })
+
+                        if (isWinner) {
                             // First to finish phase 2! Winner!
-                            await supabase.from('game_state').update({ phase2_winner_declared: true }).eq('id', 1)
                             updateData.is_phase2_winner = true
                             updateData.current_phase = 4 // Final Finished State
                             updateData.completion_time = now.toISOString()
-
-                            // Calculate duration from start_time
-                            if (participant.start_time) {
-                                const start = new Date(participant.start_time)
-                                updateData.completion_duration = Math.floor((now - start) / 1000)
-                            }
                         } else {
                             // Already have a phase 2 winner, move this person to phase 3
                             updateData.current_phase = 3
                             updateData.current_quest_index = 1
                             updateData.letters_collected = []
+                            delete updateData.completion_duration
                         }
                     } else if (participant.current_phase === 3) {
                         updateData.phase3_time = now.toISOString()
                         updateData.completion_time = now.toISOString()
                         updateData.current_phase = 4 // Final Finished State
 
-                        // Calculate duration from start_time
-                        if (participant.start_time) {
-                            const start = new Date(participant.start_time)
-                            updateData.completion_duration = Math.floor((now - start) / 1000)
-                        }
+                        const { data: isWinner } = await supabase.rpc('declare_phase_winner', {
+                            p_participant_id: participantId,
+                            p_phase_number: 3
+                        })
 
-                        if (gs && !gs.phase3_winner_declared) {
+                        if (isWinner) {
                             // First to finish phase 3! Winner!
-                            await supabase.from('game_state').update({ phase3_winner_declared: true }).eq('id', 1)
                             updateData.is_phase3_winner = true
                         }
                     }
+                }
+
+                const isTransitioningPhase = updateData.current_phase === 2 || updateData.current_phase === 3
+                if (isTransitioningPhase && !updateData.is_phase1_winner && !updateData.is_phase2_winner) {
+                    setTransitionMessage(`PHASE ${participant.current_phase} COMPLETED! Redirecting to Phase ${updateData.current_phase}...`)
                 }
 
                 const { error: updateError } = await supabase
@@ -258,6 +265,10 @@ export default function TasksPage({ onLeaderboard }) {
                     .eq('participant_id', participantId)
 
                 if (updateError) throw updateError
+
+                if (isTransitioningPhase && !updateData.is_phase1_winner && !updateData.is_phase2_winner) {
+                    setTimeout(() => setTransitionMessage(''), 4500)
+                }
 
             } catch (err) {
                 console.error("Error updating participant progress:", err)
@@ -290,6 +301,39 @@ export default function TasksPage({ onLeaderboard }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a101d] via-transparent to-[#0a101d]/60" />
                 <div className="absolute inset-0 shadow-[inset_0_0_150px_rgba(10,26,46,0.9)]" />
             </div>
+
+            {/* Transition Overlay */}
+            <AnimatePresence>
+                {transitionMessage && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0a101d]/90 backdrop-blur-md px-4"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.8 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", damping: 15 }}
+                            className="bg-black/60 border-2 border-pirate-gold/80 p-8 sm:p-12 rounded-3xl text-center max-w-lg shadow-[0_0_60px_rgba(212,175,55,0.4)] backdrop-blur-lg backdrop-saturate-150"
+                        >
+                            <motion.span
+                                className="text-6xl sm:text-7xl mb-6 block drop-shadow-[0_0_20px_rgba(212,175,55,0.6)]"
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                            >
+                                ⚓
+                            </motion.span>
+                            <h2 className="text-2xl sm:text-3xl font-serif font-black text-pirate-gold mb-4 uppercase tracking-widest leading-tight">
+                                {transitionMessage}
+                            </h2>
+                            <p className="text-[#fdf5e6]/70 italic tracking-wide text-sm sm:text-base font-serif">
+                                Prepare yourselves for the next leg of the journey!
+                            </p>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Main Interface */}
             <AnimatePresence mode="wait">

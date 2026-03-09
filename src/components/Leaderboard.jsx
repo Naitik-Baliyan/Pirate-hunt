@@ -16,7 +16,7 @@ export default function Leaderboard() {
                     .from('participants')
                     .select('*')
                     .not('completion_time', 'is', null)
-                    .order('completion_time', { ascending: true })
+                    .order('completion_duration', { ascending: true })
                     .limit(50)
 
                 if (data && !error) {
@@ -32,7 +32,7 @@ export default function Leaderboard() {
         const fetchGameState = async () => {
             const { data } = await supabase.from('game_state').select('*').single()
             if (data) {
-                setWinnerDeclared(data.phase3_winner_declared)
+                setWinnerDeclared(data.phase3_winner_declared || data.hunt_status === 'completed')
             }
         }
 
@@ -45,7 +45,7 @@ export default function Leaderboard() {
                 fetchLeaderboard()
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'game_state' }, (payload) => {
-                if (payload.new) setWinnerDeclared(payload.new.phase3_winner_declared)
+                if (payload.new) setWinnerDeclared(payload.new.phase3_winner_declared || payload.new.hunt_status === 'completed')
             })
             .subscribe()
 
