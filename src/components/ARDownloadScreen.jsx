@@ -54,7 +54,7 @@ export default function ARDownloadScreen({ onContinue }) {
                     </div>
 
                     <motion.a
-                        href="https://drive.google.com/file/d/1a1We4bbeqN5ebh-Noc_d1HPIedBYOhzn/view?usp=drivesdk"
+                        href="https://drive.google.com/file/d/1iQmc0IP3GjGO5StnDxbdSF0ehiHm8cCs/view?usp=drivesdk"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full relative overflow-hidden bg-pirate-gold px-6 py-4 rounded-2xl font-black text-black uppercase tracking-[0.15em] shadow-[0_20px_40px_rgba(212,175,55,0.3)] transition-all flex items-center justify-center gap-3 group"
