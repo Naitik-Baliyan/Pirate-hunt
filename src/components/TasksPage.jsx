@@ -5,7 +5,7 @@ import { supabase } from '../supabaseClient'
 import tasksBg from '../assets/registration-map.jpg'
 
 export default function TasksPage({ onLeaderboard, initialParticipant, initialGameState }) {
-    const [gameState, setGameState] = useState(initialGameState || { current_phase: 1, phase1_winner_declared: false, phase2_winner_declared: false, phase3_winner_declared: false })
+    const [gameState, setGameState] = useState(initialGameState || { current_phase: 2, phase1_winner_declared: true, phase2_winner_declared: false, phase3_winner_declared: false })
     const [participant, setParticipant] = useState(initialParticipant || null)
     const [clues, setClues] = useState([])
     const [inputValue, setInputValue] = useState('')
@@ -27,7 +27,7 @@ export default function TasksPage({ onLeaderboard, initialParticipant, initialGa
 
         // If data wasn't passed in (e.g. direct refresh in development), fetch it
         const fetchData = async () => {
-            if (!participant || !gameState.target_word) {
+            if (!participant || !gameState.current_word) {
                 const { data: gs } = await supabase.from('game_state').select('*').single()
                 const { data: p } = await supabase.from('participants').select('*').eq('participant_id', participantId).single()
 
@@ -111,16 +111,7 @@ export default function TasksPage({ onLeaderboard, initialParticipant, initialGa
     const progress = lettersCollected.length
 
     // Derived target string based on user phase - following prompt requirements
-    const getTargetWord = () => {
-        if (!participant) return 'I451S'
-        switch (participant.current_phase) {
-            case 1: return 'I451S'
-            case 2: return '7H3N4'
-            case 3: return '8P1R4'
-            default: return 'I451S'
-        }
-    }
-    const targetWord = getTargetWord()
+    const targetWord = gameState.current_word || '7H3N4'
     const targetLetters = targetWord.split('')
 
     const handleSumbitLetter = async (e) => {
@@ -138,7 +129,15 @@ export default function TasksPage({ onLeaderboard, initialParticipant, initialGa
         // Fetch latest game state to check if phase is closed or winner declared
         const { data: gs, error: gsError } = await supabase.from('game_state').select('*').single()
 
-        // Block submissions if hunt is completed (uses winner_declared field which exists)
+        // Block Phase 1 submissions if winner declared
+        if (gs && participant.current_phase === 1 && gs.phase1_winner_declared) {
+            setErrorMsg('Phase 1 is closed. Please refresh for Phase 2!')
+            setTimeout(() => setErrorMsg(''), 5000)
+            setIsSubmitting(false)
+            return
+        }
+
+        // Block submissions if hunt is completed
         if (gs && gs.winner_declared === true && gs.phase3_winner_declared === true) {
             setErrorMsg('Hunt Concluded! The treasure has been claimed.')
             setTimeout(() => setErrorMsg(''), 5000)
@@ -228,9 +227,6 @@ export default function TasksPage({ onLeaderboard, initialParticipant, initialGa
                     .from('participants')
                     .update(updateData)
                     .eq('participant_id', participantId)
-
-                console.log("Current Index before update:", participant.current_quest_index)
-                console.log("Update Data sent to DB:", updateData)
 
                 if (updateError) throw updateError
 

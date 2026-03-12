@@ -5,6 +5,7 @@ import { supabase } from './supabaseClient'
 import BootScreen from './components/BootScreen'
 import BackgroundMusic from './components/BackgroundMusic'
 import ARDownloadScreen from './components/ARDownloadScreen'
+import MaintenancePage from './components/MaintenancePage'
 
 const StoryPage = lazy(() => import('./components/StoryPage'))
 const RegistrationPage = lazy(() => import('./components/RegistrationPage'))
@@ -15,7 +16,7 @@ const Leaderboard = lazy(() => import('./pages/Leaderboard'))
 const MapPage = lazy(() => import('./pages/MapPage'))
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('boot')
+  const [currentPage, setCurrentPage] = useState('maintenance')
   const [session, setSession] = useState({
     isLoaded: false,
     participant: null,
@@ -54,6 +55,11 @@ export default function App() {
           participant: participantData,
           gameState: gs
         })
+
+        // Check if maintenance is active from game state
+        if (gs?.is_maintenance === true) {
+          setCurrentPage('maintenance')
+        }
       } catch (err) {
         console.error("Initialization failed:", err)
         setSession(prev => ({ ...prev, isLoaded: true }))
@@ -124,6 +130,19 @@ export default function App() {
         <Routes>
           <Route path="/" element={
             <AnimatePresence mode="wait">
+              {currentPage === 'maintenance' && (
+                <motion.div
+                  key="maintenance"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8 }}
+                  className="w-full h-screen"
+                >
+                  <MaintenancePage />
+                </motion.div>
+              )}
+
               {currentPage === 'boot' && (
                 <motion.div
                   key="boot"
