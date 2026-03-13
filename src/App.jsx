@@ -16,7 +16,7 @@ const Leaderboard = lazy(() => import('./pages/Leaderboard'))
 const MapPage = lazy(() => import('./pages/MapPage'))
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('maintenance')
+  const [currentPage, setCurrentPage] = useState('boot')
   const [session, setSession] = useState({
     isLoaded: false,
     participant: null,
@@ -59,6 +59,9 @@ export default function App() {
         // Check if maintenance is active from game state
         if (gs?.is_maintenance === true) {
           setCurrentPage('maintenance')
+        } else if (currentPage === 'maintenance') {
+          // If we were in maintenance (initial state) but DB says it's off, move to boot
+          setCurrentPage('boot')
         }
       } catch (err) {
         console.error("Initialization failed:", err)
